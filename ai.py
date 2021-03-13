@@ -6,14 +6,28 @@ Created on Tue Mar  9 12:27:15 2021
 @author: kuba
 """
 import copy
+import numpy as np
 
-class BeliefStates:
-  def __init__(self):
+
+
+w = {"H0": {"H0":0.2,"H1": 0.2, "P0": 0.5, "P1": 0.1},
+     "H1": {"H0":0.2,"H1": 0.2, "P0": 0.1, "P1": 0.5},
+     "P0": {"H0":0.3,"H1": 0.3, "P0": 0.2, "P1": 0.2},
+     "P1": {"H0":0.3,"H1": 0.3, "P0": 0.2, "P1": 0.2}
+         }
+
+
+class BeliefSpace:
+  def __init__(self, state):
       self.states = []
+      
+      
+    
+      
+      return self.states
+    
 
-
-
-class State():
+class State:
     def __init__(self,player,cards1,cards2,table,deck, parent):
         self.parent = parent
         self.depth = 0
@@ -23,7 +37,7 @@ class State():
       
         self.cards1 = cards1 #list of cards in player one's hand (Card list) 2cards that need to be created with the Card object
      
-        self.cards2 = cards2  #list of cards in player two's hand (Card list) 2cards that need to be created with the Card object
+        self.cards2 = cards2  #list of cards in AI 's hand (Card list) 2cards that need to be created with the Card object
       
         self.table = table #list of card numbers in the table (int list) 
         #/!\initial table should contain a 0 for the Play action to work
@@ -36,7 +50,7 @@ class State():
         self.discoveredCards = cards1+cards2+tableCards #list of all the cards that are out of the deck (list)
     
     
-class Card():
+class Card:
   def __init__(self,number):
     self.number = number
     self.known = False
@@ -119,7 +133,10 @@ class Actions:
 class Solver:
     def __init__(self,max_depth):
         self.max_depth = max_depth
-
+        
+    def utility(self, state):
+        return 10 * len(state.table)
+    """
     def forward(self, beliefspace, actions):
         visited = []
         queue = []
@@ -141,6 +158,38 @@ class Solver:
                     if child.depth == self.max_depth:
                     	terminal_nodes.append(child)            
         return terminal_nodes
+        """   
+    def forward2(self, beliefspace, actions):
+        results = []
+        for state in beliefspace:
+            children = [(self.weighted_value(action(state, side)[0], a_id + str(side)),a_id, side) for (action,a_id) in actions for side in [0, 1]]
+            print(children)
+            results.append(sorted(children, key=lambda tup: tup[0])[-1])
+        
+        return results
+    
+    def max_value(self, state):
+        global w
+        if state.depth >= self.max_depth:
+            return self.utility(state)
+        v = - np.inf
+        for (a,a_id) in actions:
+            for s in range(2):
+                v = np.amax(v,self.weighted_value(a(state,s)[0],a_id + str(s)))
+        return v
+        
+        
+    def weighted_value(self, state, act_id):
+        global w
+        weights = w[act_id]
+        if state.depth >= self.max_depth:
+            return self.utility(state)
+        v = 0
+        for (a,a_id) in actions:
+            for s in range(2):
+                v = v + weights[a_id+str(s)]*self.max_value(a(state,s)[0])
+        return v
+            
   
   
 if __name__ == "__main__":
@@ -150,17 +199,17 @@ if __name__ == "__main__":
     c3 =  Card(3)
     c4 =  Card(4)
     c5 =  Card(5)
-    cards1 = [c1, c5]
+    cards1 = [c5, c1]
     cards2 = [c2, c4]
     table = [0]
     deck = 1
     parent = None
-    player = 1
+    player = 2
     state = State(player,cards1,cards2,table,deck, parent)
     initial_belief_states = [state]
     solver = Solver(2)
-    actions = [Actions.Play, Actions.Hint]
-    terminal = solver.forward(initial_belief_states, actions)
+    actions = [(Actions.Play, "P"), (Actions.Hint, "H")]
+    terminal = solver.forward2(initial_belief_states, actions)
     """
     print("Some tests to see the Actions funtioning:")
     print("0.Initial state with cards: player1: (1,2), player2: (3,4)")
