@@ -11,10 +11,10 @@ from Main import *
     
 def firstTest():
     numberOfColors = 2
-    cardsDistribution = [1,1,1,2,2]
+    cardsDistribution = [1,1,1,2,2,3,3,4,4,5]
     newDeck = Deck(numberOfColors,cardsDistribution)
     
-    numberOfCards = 2
+    numberOfCards = 4
     Player1 = Player("Miguel", 1, numberOfCards = 4)
     Player1.drawNewHand(newDeck)
     Player2 = Player("AI", 2, numberOfCards = 4)
@@ -43,10 +43,11 @@ def firstTest():
     return states
     
 print("Running test 1:")
-
-#states = firstTest()
-#state1 = states[0]
-#a = state1.Player2.storeInfo() + state1.deck.storeInfo()
-#print(len(a))
-#comb = combinations(a,4)
-#print(len(list(comb)))
+"""
+states = firstTest()
+state1 = states[0]
+a = state1.Player2.storeInfo() + state1.deck.storeInfo()
+print(len(a))
+comb = combinations(a,4)
+print(len(list(comb)))
+"""

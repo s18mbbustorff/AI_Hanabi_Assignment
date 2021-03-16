@@ -6,7 +6,8 @@ Created on Mon Mar  8 15:39:18 2021
 """
 import numpy as np
 from random import *
-
+# REMOVE THE RANDOM SEED
+seed(10)
 
 class State():
     def __init__(self, Player1, Player2, deck, playedPile, discardPile, hintTokens, penaltyTokens, turn, parent):

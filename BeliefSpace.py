@@ -19,17 +19,35 @@ class BeliefSpace:
       
       deck =  state.deck.storeInfo()
       deck = [(i,j) for [i,j] in deck]
-      player2 = [(i,j) for [i,j] in state.Player2.storeInfo()]
+      
+      
+      #Reduce the belief space if the AI cards have hints
+      hinted = []
+      not_hinted_indeces = []
+      for i in range(len(state.Player2.cards)):
+          if state.Player2.cards[i].colorHinted or state.Player2.cards[i].numberHinted:
+              hinted.append((state.Player2.cards[i].number,state.Player2.cards[i].color))
+          else:
+              not_hinted_indeces.append(i)
+      
+      
+      
+      player2 = [(i,j) for [i,j] in state.Player2.storeInfo() if (i,j) not in hinted]
       unknown = player2 + deck
       
-      comb = set(list(combinations(unknown,hand_size)))
-      print(len(comb))
+      #print(player2)
+      comb = set(list(combinations(unknown,hand_size - len(hinted))))
+      #print(len(comb))
+      #print(comb)
       for i in comb:
           newstate = copy.deepcopy(state)
           deck = [item for item in unknown if item not in i]
           newstate.deck = [Card(k[1], k[0]) for k in deck]
-          newstate.Player2.cards = [Card(k[1], k[0]) for k in i]
           
+          new = [Card(k[1], k[0]) for k in i]
+          for ind, k in enumerate(not_hinted_indeces):
+              newstate.Player2.cards[k] = new[ind]
+              
           self.states.append(newstate)
     
 
@@ -38,14 +56,78 @@ class BeliefSpace:
 if __name__ == "__main__":
     states = firstTest()
     state1 = states[0]
+    state1.Player2.cards[2].colorHinted = True
+    space = BeliefSpace(state1,4)
+    #for state in space.states:
+        #print(state.Player2.storeInfo())
+        
+    #print(state1.Player1.storeInfo())   
+    #print(state.Player1.storeInfo())   
     
+
+"""
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+
+
+from tests import firstTest
+from ai_new import Card
+import copy
+from itertools import combinations
+
+
+class BeliefSpace:
+  def __init__(self, state, hand_size):
+      self.states = []
+      
+      deck =  state.deck.storeInfo()
+      deck = [(i,j) for [i,j] in deck]
+      
+      
+      #Reduce the belief space if the AI cards have hints
+      hinted = []
+      not_hinted_indeces = []
+      for i in range(len(state.Player2.cards)):
+          if state.Player2.cards[i].colorHinted or state.Player2.cards[i].numberHinted:
+              hinted.append((state.Player2.cards[i].color,state.Player2.cards[i].number))
+          else:
+              not_hinted_indeces.append(i)
+      
+      
+      
+      player2 = [(i,j) for [i,j] in state.Player2.storeInfo() if (i,j) not in hinted]
+      unknown = player2 + deck
+      
+      print(hinted)
+      comb = set(list(combinations(unknown,hand_size - len(hinted))))
+      print(len(comb))
+      #print(comb)
+      for i in comb:
+          newstate = copy.deepcopy(state)
+          deck = [item for item in unknown if item not in i]
+          newstate.deck = [Card(k[1], k[0]) for k in deck]
+          
+          new = [Card(k[1], k[0]) for k in i]
+          for ind, k in enumerate(not_hinted_indeces):
+              newstate.Player2.cards[k] = new[ind]
+          self.states.append(newstate)
+    
+
+
+
+if __name__ == "__main__":
+    states = firstTest()
+    state1 = states[0]
+    state1.Player2.cards[2].colorHinted = True
     space = BeliefSpace(state1,4)
     for state in space.states:
         print(state.Player2.storeInfo())
         
-    
     print(state1.Player1.storeInfo())   
     print(state.Player1.storeInfo())   
     
+"""
+
 
 
