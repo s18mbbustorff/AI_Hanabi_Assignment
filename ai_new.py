@@ -9,40 +9,32 @@ import copy
 import numpy as np
 
 
-
-w = {"H0": {"H0":0.2,"H1": 0.2, "P0": 0.5, "P1": 0.1},
-     "H1": {"H0":0.2,"H1": 0.2, "P0": 0.1, "P1": 0.5},
-     "P0": {"H0":0.3,"H1": 0.3, "P0": 0.2, "P1": 0.2},
-     "P1": {"H0":0.3,"H1": 0.3, "P0": 0.2, "P1": 0.2}
-         }
-
-
 class BeliefSpace:
   def __init__(self, state):
       self.states = []
       
-      
-    
-      
       return self.states
     
 
-class State:
-    def __init__(self,player,cards1,cards2,table,deck, parent):
+class State():
+    def __init__(self, Player1, Player2, deck, playedPile, discardPile, hintTokens, penaltyTokens, turn, parent):
+        self.Player1 = Player1
+        self.Player2 = Player2
+        self.deck = deck
+        self.playedPile = playedPile
+        self.discardPile = discardPile
+        self.hintTokens = hintTokens
+        self.penaltyTokens = penaltyTokens
+        self.turn = turn
+        
         self.parent = parent
         self.depth = 0
         self.value = 0
-        self.player = player #player that has the turn, either 1 or 2 (int)
-        self.cards1 = cards1 #list of cards in player one's hand (Card list) 2cards that need to be created with the Card object
-        self.cards2 = cards2  #list of cards in AI 's hand (Card list) 2cards that need to be created with the Card object
-        self.table = table #list of card numbers in the table (int list) 
-        #/!\initial table should contain a 0 for the Play action to work   
-        self.deck = deck #number of cards left in the deck (int)
-        tableCards =[]
-        for nb in table:
-            tableCards.append(Card(nb))
-            
-        self.discoveredCards = cards1+cards2+tableCards #list of all the cards that are out of the deck (list)
+        
+        
+    def __eq__(self, other):
+       
+        return self.__dict__ == other.__dict__
     
     
 class Card():
@@ -56,22 +48,31 @@ class Card():
         self.number = number
         self.colorHinted = False
         self.numberHinted = False
+        
+    def __eq__(self, other):
+       
+        return self.__dict__ == other.__dict__
     
   
-class Actions:
-    def Hint(initialstate,side):
+class Hint_fun:
+    def __init__(self,h_type):
+        self.h_type = h_type
+        self.name = "hint"
+    def __call__(self,initialstate,side = None):
         newstate = copy.deepcopy(initialstate) #side is an integer, 0 = left, 1 = right
         newstate.parent = initialstate
         newstate.depth = initialstate.depth+1
-        if initialstate.player == 1:
-          newstate.cards2[side].known=True
-          newstate.player = 2
-        elif initialstate.player == 2:
-          newstate.cards1[side].known=True
-          newstate.player = 1
-        return [newstate]
+        if side != None:
+            newstate.hands[initialstate.player - 1][side].known=True
+        newstate.player = 3 - initialstate.player
     
-    def Play(initialstate,side): #side is an integer, 0 = left, 1 = right
+        return [newstate]
+
+    
+class Play_fun: 
+    def __init__(self):
+        self.name = "play"
+    def __call__(self,initialstate,side): #side is an integer, 0 = left, 1 = right
         newstate = copy.deepcopy(initialstate)
         newstate.parent = initialstate
         newstate.depth = initialstate.depth+1
@@ -130,47 +131,31 @@ class Actions:
                     
             for state in newstates:
                 state.deck = initialstate.deck-1
-            return newstates
-    
+            return newstates[0] # should return only one state
+
+
+
 class Solver:
-    def __init__(self,max_depth, hand_size,actions):
+    def __init__(self,max_depth, hand_size):
         self.max_depth = max_depth
         self.hand_size = hand_size
         
-        self.actions = actions
+        self.actions = [[Hint_fun("color"), Hint_fun("number")], Play_fun()]
         
     def utility(self, state):
         return 10 * len(state.table)
-    """
-    def forward(self, beliefspace, actions):
-        visited = []
-        queue = []
-        terminal_nodes = []
-        for state in beliefspace:
-          visited.append(state)
-          queue.append(state)
-          
-        while queue:
-          s = queue.pop(0) 
-          if s.depth < self.max_depth:
-            for action in actions:
-                for side in [0, 1]:
-                  children = action(s, side)
-                  for child in children:
-                    queue.append(child)
-                    visited.append(child)
-                    print(child.depth)
-                    if child.depth == self.max_depth:
-                    	terminal_nodes.append(child)            
-        return terminal_nodes
-        """   
-        
-        
-    """   
-    def forward2(self, beliefspace, actions):
+   
+    
+    def evaluate(self, beliefspace):
         results = []
         for state in beliefspace:
-            children = [(self.weighted_value(action(state, pos)[0], a_id + str(pos)),a_id, pos) for (action,a_id) in actions for pos in np.arange(self.hand_size)]
+            # TO DO
+            # IF AN ACTION IS NOT PERMISIBLE RETURN NONE (action that would lose a life is not permisible)
+            # PLAY RETURNS ONLY ONE STATE AND IT DELETES THE PLAYED CARDS FROM THE PLAYERS HANDS
+            # CHECK FOR IDENTICAL STATES
+            # HINT FUNCTION SHOULD BE ABLE NOT TO GIVE HINT (Player giving a hint to the AI)
+            children = [(self.weighted_value(action(state, pos),action.__dict__),action.__dict__,pos) for action in self.actions[0] for pos in np.arange(len(state.hands[2 - state.player]))] # giving hint
+            children = children + [(self.weighted_value(self.actions[1](state, pos),self.actions[1].__dict__,pos),self.actions[1].__dict__,pos) for pos in np.arange(len(state.hands[state.player]))] # playing card
             print(children)
             results.append(sorted(children, key=lambda tup: tup[0])[-1])
         
@@ -178,59 +163,46 @@ class Solver:
     
     def max_value(self, state):
         global w
+        if state == None:
+            return 0
         if state.depth >= self.max_depth:
             return self.utility(state)
         v = - np.inf
-        for (a,a_id) in actions:
-            for s in range(2):
-                v = np.amax(v,self.weighted_value(a(state,s)[0],a_id + str(s)))
+        # giving hints
+        for action in self.actions[0]: 
+            for pos in np.arange(len(state.hands[2 - state.player])):
+                v = np.amax(v,self.weighted_value(action(state,pos)))
+        # playing cards 
+        for pos in np.arange(len(state.hands[state.player])):
+            v = np.amax(v,self.weighted_value(self.actions[1](state, pos)))
         return v
         
         
-    def weighted_value(self, state, act_id):
+    def weighted_value(self, state):
         global w
-        weights = w[act_id]
+        if state == None:
+            return 0
+        # Calculate probabilities for what might the player play, if there is a hint on a card, playing this card is more probable than other actions
+        # If there are no hints, giving a hint is the most probable
+        # However if a player gives us a hint, it has no new information for us -> idle state
         if state.depth >= self.max_depth:
             return self.utility(state)
-        v = 0
-        for (a,a_id) in actions:
-            for s in range(2):
-                v = v + weights[a_id+str(s)]*self.max_value(a(state,s)[0])
-        return v
-    """
-    
-    
-    
-    
-    def evaluate(self, beliefspace, actions):
-        results = []
-        for state in beliefspace:
-            children = [(self.weighted_value(action(state, pos)[0], a_id + str(pos)),a_id, pos) for (action,a_id) in actions for pos in np.arange(self.hand_size)]
-            print(children)
-            results.append(sorted(children, key=lambda tup: tup[0])[-1])
-        
-        return results
-    
-    def max_value(self, state):
-        global w
-        if state.depth >= self.max_depth:
-            return self.utility(state)
-        v = - np.inf
-        for (a,a_id) in actions:
-            for s in range(2):
-                v = np.amax(v,self.weighted_value(a(state,s)[0],a_id + str(s)))
-        return v
-        
-        
-    def weighted_value(self, state, act_id):
-        global w
-        weights = w[act_id]
-        if state.depth >= self.max_depth:
-            return self.utility(state)
-        v = 0
-        for (a,a_id) in actions:
-            for s in range(2):
-                v = v + weights[a_id+str(s)]*self.max_value(a(state,s)[0])
+        a = np.ones(len(state.hands[state.player]))
+        for i in range(len(state.hands[state.player])):
+            if state.hands[state.player][i].colorHinted or state.hands[state.player][i].numberHinted:
+                a[i] = 2
+            if state.hands[state.player][i].colorHinted and state.hands[state.player][i].numberHinted:
+                a[i] = 4
+        if a.sum() == len(state.hands[state.player]): # if there are no hints on the cards
+            w_hint = 2/(2 + len(state.hands[state.player]))
+            w_play = 1/(2 + len(state.hands[state.player]))
+        else: #if there are hints on the cards
+            w_hint = 1/(a.sum())
+            w_play = 1/(a.sum())
+            
+        v = w_hint*self.max_value(self.actions[0][0](state))
+        for pos in np.arange(len(state.hands[state.player])):
+            v = v + w_play*a[pos]*self.max_value(self.actions[1](state, pos))
         return v
   
   
@@ -250,7 +222,6 @@ if __name__ == "__main__":
     state = State(player,cards1,cards2,table,deck, parent)
     initial_belief_states = [state]
     solver = Solver(2)
-    actions = [(Actions.Play, "P"), (Actions.Hint, "H")]
     terminal = solver.forward2(initial_belief_states, actions)
     """
     print("Some tests to see the Actions funtioning:")

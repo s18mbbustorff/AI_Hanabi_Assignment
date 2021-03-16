@@ -5,18 +5,19 @@ Created on Mon Mar  8 19:30:29 2021
 @author: mbust
 """
 
+from itertools import combinations
 from Main import *
     
     
 def firstTest():
     numberOfColors = 2
-    cardsDistribution = [1,1,1,2,2,3,3,4,4,5]
+    cardsDistribution = [1,1,1,2,2]
     newDeck = Deck(numberOfColors,cardsDistribution)
     
-    numberOfColors = 4
-    Player1 = Player("Miguel", 1, numberOfColors)
+    numberOfCards = 2
+    Player1 = Player("Miguel", 1, numberOfCards = 4)
     Player1.drawNewHand(newDeck)
-    Player2 = Player("Sara", 2, numberOfColors)
+    Player2 = Player("AI", 2, numberOfCards = 4)
     Player2.drawNewHand(newDeck)
     
     playedPile = PlayedPile(numberOfColors)
@@ -43,5 +44,9 @@ def firstTest():
     
 print("Running test 1:")
 
-states = firstTest()
-state1 = states[0]
+#states = firstTest()
+#state1 = states[0]
+#a = state1.Player2.storeInfo() + state1.deck.storeInfo()
+#print(len(a))
+#comb = combinations(a,4)
+#print(len(list(comb)))

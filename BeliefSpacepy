@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Mar 16 11:53:02 2021
+
+@author: kuba
+"""
+
+
+class BeliefSpace:
+  def __init__(self, state):
+      self.states = []
+      
+      a = state1.Player2.storeInfo() + state1.deck.storeInfo()
+      print(len(a))
+      comb = combinations(a,4)
+      print(len(list(comb)))
+      
+      return self.states
+    
