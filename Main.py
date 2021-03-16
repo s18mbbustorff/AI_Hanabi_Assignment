@@ -22,6 +22,112 @@ class State():
         self.parent = parent
         self.depth = 0
         self.value = 0
+        
+    def switchTurn(self):
+        self.turn = self.turn%2 + 1
+        
+        
+class Actions():
+    
+    def hint(initialState, hintType, hint):
+        #hintType: String. Can be "number" or "color"
+        #hint: String ("red","green",...) or Int ("1","2","3","4" or "5")
+        
+        #initializing variables (extracted from state)
+        newState = copy.deepcopy(initialState)
+        newState.parent = initialState
+        newState.depth = initialState.depth+1
+        
+        if newState.turn == 1:
+            activePlayer = newState.Player1
+            otherPlayer = newState.Player2
+        elif newState.turn == 2:
+            activePlayer = newState.Player2
+            otherPlayer = newState.Player1
+        hintTokens = newState.hintTokens
+        
+        
+        if hintTokens == 0:
+            print ("Error. Number of Hint Tokens is 0. You cannot make a Hint.")
+            return None
+        
+        if player.allHintsGiven(hint, hintType):
+                print ("Error. Hint already given or no cards correspond to the hint. You cannot make that hint.")
+                return None
+            
+        for i in range(len(otherPlayer.cards)):
+            if hintType == "color":
+                if otherPlayer.cards[i].color == hint:
+                    otherPlayer.cards[i].colorHinted = True
+            elif hintType == "number":
+                if otherPlayer.cards[i].number == hint:
+                    otherPlayer.cards[i].numberHinted = True
+                    
+        newState.switchTurn()
+        
+        return newState
+        
+    def discard(initialState, cardPosition):
+        #cardPosition: Int. Index of the card you want to discard from your hand.
+        
+        #initializing variables (extracted from state)
+        newState = copy.deepcopy(initialState)
+        newState.parent = initialState
+        newState.depth = initialState.depth+1
+        
+        if newState.turn == 1:
+            activePlayer = newState.Player1
+        elif newState.turn == 2:
+            activePlayer = newState.Player2
+        hintTokens = newState.hintTokens
+        deck = newState.deck
+        
+        if (hintTokens.nbTokens == hintTokens.maxTokens):
+            print ("Error. Number of Hint Tokens is maxed. You cannot discard a card.")
+            return None
+        
+        discardedCard = activePlayer.cards[cardPosition]
+        discardPile.addCard(discardedCard)
+        activePlayer.draw(deck, cardPosition)
+        hintTokens.addT()
+        
+        newState.switchTurn()
+        
+        return newState
+    
+    
+    
+        
+    def playCard(initialState, cardPosition):
+        #cardPosition: Int. Index of the card you want to play from your hand.
+        
+        #initializing variables (extracted from state)
+        newState = copy.deepcopy(initialState)
+        newState.parent = initialState
+        newState.depth = initialState.depth+1
+        
+        if newState.turn == 1:
+            activePlayer = newState.Player1
+        elif newState.turn == 2:
+            activePlayer = newState.Player2
+        penaltyTokens = newState.penaltyTokens
+        deck = newState.deck
+        
+        playedCard = activePlayer.cards[cardPosition]
+        
+        #check if the card was correct somehow
+        #use functions from the playPile
+        verif = newState.playedPile.addCard(playedCard)
+        
+        if verif == False:
+            newState.penaltyTokens.addT()
+            newState.discardPile.addCard(playedCard)
+            
+        activePlayer.draw(deck, cardPosition)
+        
+        newState.switchTurn()
+            
+        return newState
 
 
 
@@ -39,7 +145,6 @@ class Player():
         
     def setCards(self,cards):
         self.cards(cards)
-        self.numberOfCards = len(cards)
         
     
     def drawNewHand(self, deck):
@@ -53,17 +158,18 @@ class Player():
         
     #-------DISCARD---------------
     
+    '''
     def discard(self,discardPile, cardPosition, hintTokens):
         if (hintTokens.nbTokens == hintTokens.maxTokens):
             print ("Error. Number of Hint Tokens is maxed. You cannot discard a card.")
-            return
+            return None
         discardedCard = self.cards[cardPosition]
         discardPile.addCard(discardedCard)
         newCard = self.draw(cardPosition)
         self.cards[ardPosition] = newCard
         hintTokens.addT()
         return newCard
-    
+    '''
     def draw(self,deck, cardPosition):
         newCard = deck.removeRandom()
         #print("pos: {}, color: {}, nb: {}".format(cardPosition, newCard.color,newCard.number))
@@ -72,10 +178,11 @@ class Player():
         
     #-----------HINT--------------
     
+    '''
     def hint(self, player, hintType, hint, hintTokens):
         if hintTokens == 0:
             print ("Error. Number of Hint Tokens is 0. You cannot make a Hint.")
-            return
+            return None
         
         if player.allHintsGiven(hint, hintType):
                 print ("Error. Hint already given or no cards correspond to the hint. You cannot make that hint.")
@@ -88,7 +195,7 @@ class Player():
             elif hintType == "number":
                 if player.cards[i].number == hint:
                     player.cards[i].numberHinted = True
-     
+    ''' 
     
     def allHintsGiven(self, hint, hintType):
         if hintType == "color":
@@ -102,7 +209,8 @@ class Player():
                 if (cards[i].number == hint) and (cards[i].numberHinted == False):
                     return False
                 return True
-         
+    
+    '''
     def playCard(self, playPile, cardPosition, deck, penaltyTokens):
         playedCard = self.cards[cardPosition]
         
@@ -110,7 +218,7 @@ class Player():
         #use functions from the playPile
         
         self.draw(deck, cardPosition)
-        
+    '''   
     
     #-----------------------------
     #------Visualization functions
@@ -243,8 +351,8 @@ class PlayedPile():
         self.piles = [[] for i in range(self.numberOfColors)]   ## Lists (representing each pile) within a list 
         
     def addCard(self, card):
-        if self.card.color in self.colors:
-            pileIndex = self.colors.index(self.card.color)
+        if card.color in self.colors:
+            pileIndex = self.colors.index(card.color)
             print("Index of corresponding color: {}".format(pileIndex))
             
             if (len(self.piles[pileIndex]) == 0) and (card.number == 1):
