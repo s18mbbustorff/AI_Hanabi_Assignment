@@ -27,6 +27,38 @@ class State():
     def switchTurn(self):
         self.turn = self.turn%2 + 1
         
+    def display(self):
+        score = 0
+        for s in self.playedPile.piles:
+            score = len(s) + score            
+        
+        print ("Score : {}. Hint tokens left : {}, Penalty tokens used : {}. Cards left in the deck : {}.\n".format(score, self.hintTokens.numberOfTokens, self.penaltyTokens.numberOfTokens, len(self.deck.cards)))
+
+        red = ';'.join([str(1), str(31), str(28)])
+        blue = ';'.join([str(1), str(34), str(28)])
+        green = ';'.join([str(1), str(39), str(42)])
+        yellow = ';'.join([str(1), str(28), str(43)])
+        white = ';'.join([str(1), str(37), str(40)])
+        
+        if self.playedPile.numberOfColors > 0:
+            print ("Played Cards : \x1b[%sm %s \x1b[0m" % (red, self.playedPile.convertList(0)), end=" ")
+        if self.playedPile.numberOfColors >= 2:
+            print ('\x1b[%sm %s \x1b[0m' % (blue, self.playedPile.convertList(1)), end=" ")
+        if self.playedPile.numberOfColors >= 3:
+            print ('\x1b[%sm %s \x1b[0m' % (green, self.playedPile.convertList(2)), end=" ")
+        if self.playedPile.numberOfColors >= 4:
+            print ('\x1b[%sm %s \x1b[0m' % (yellow, self.playedPile.convertList(3)), end=" ")
+        if self.playedPile.numberOfColors == 5:
+            print ('\x1b[%sm %s \x1b[0m' % (white, self.playedPile.convertList(4)))
+            print ('\n')
+            
+        print ("Discarded Cards : ", end=" ") 
+        discardedPrint = self.discardPile.convertList()
+        for card in discardedPrint:
+            print(card, end="")
+        print("")
+    
+    
                 
 class Action():
     
@@ -63,6 +95,8 @@ class Action():
             elif hintType == "number":
                 if otherPlayer.cards[i].number == hint:
                     otherPlayer.cards[i].numberHinted = True
+        
+        hintTokens.removeT()
                     
         newState.switchTurn()
         
@@ -82,13 +116,15 @@ class Action():
             activePlayer = newState.Player2
         hintTokens = newState.hintTokens
         deck = newState.deck
+        discardPile = newState.discardPile
         
         if (hintTokens.numberOfTokens == hintTokens.maxTokens):
             print ("Error. Number of Hint Tokens is maxed. You cannot discard a card.")
             return None
-        
+        print("card discarded.1")
         discardedCard = activePlayer.cards[cardPosition]
         discardPile.addCard(discardedCard)
+        print("card discarded.2")
         activePlayer.draw(deck, cardPosition)
         hintTokens.addT()
         
@@ -358,6 +394,33 @@ class DiscardPile():
         self.cards.append(card)
         self.numberOfCards += 1
         return self.numberOfCards
+    
+    def convertList(self):
+        
+        red = ';'.join([str(1), str(31), str(28)])
+        blue = ';'.join([str(1), str(34), str(28)])
+        green = ';'.join([str(1), str(39), str(42)])
+        yellow = ';'.join([str(1), str(28), str(43)])
+        white = ';'.join([str(1), str(37), str(40)])
+        
+        listCards = []
+        for i in range(len(self.cards)):
+            
+            currentCard = self.cards[i]
+            if currentCard.color == "red":
+                coloredCardNumber = '\x1b[%sm %s \x1b[0m' % (red, currentCard.number)
+            elif currentCard.color == "blue":
+                coloredCardNumber = '\x1b[%sm %s \x1b[0m' % (blue, currentCard.number)
+            elif currentCard.color == "green":
+                coloredCardNumber = '\x1b[%sm %s \x1b[0m' % (green, currentCard.number)
+            elif currentCard.color == "yellow":
+                coloredCardNumber = '\x1b[%sm %s \x1b[0m' % (yellow, currentCard.number)
+            elif currentCard.color == "white":
+                coloredCardNumber = '\x1b[%sm %s \x1b[0m' % (white, currentCard.number)
+            listCards += [coloredCardNumber]
+            
+        return listCards
+            
         
 class PlayedPile():
     
@@ -387,6 +450,11 @@ class PlayedPile():
         else:
             print ("Error. Card color does not exist. Could not add the card to a pile")
     
+    def convertList(self, pilePosition):
+        listCards = []
+        for i in range(len(self.piles[pilePosition])):
+            listCards += [self.piles[pilePosition][i].number]
+        return listCards
     
 class HintTokens():
     
