@@ -6,8 +6,8 @@ Created on Mon Mar  8 15:39:18 2021
 """
 import numpy as np
 from random import *
-# REMOVE THE RANDOM SEED
-seed(10)
+import copy
+
 
 class State():
     def __init__(self, Player1, Player2, deck, playedPile, discardPile, hintTokens, penaltyTokens, turn, parent):
@@ -52,7 +52,7 @@ class Actions():
             print ("Error. Number of Hint Tokens is 0. You cannot make a Hint.")
             return None
         
-        if player.allHintsGiven(hint, hintType):
+        if otherPlayer.allHintsGiven(hint, hintType):
                 print ("Error. Hint already given or no cards correspond to the hint. You cannot make that hint.")
                 return None
             
@@ -199,17 +199,23 @@ class Player():
     ''' 
     
     def allHintsGiven(self, hint, hintType):
-        if hintType == "color":
+        if hint is None:
             for i in range(len(self.cards)):
-                if (cards[i].color == hint) and (cards[i].colorHinted == False):
+                if (self.cards[i].colorHinted == False) or (self.cards[i].numberHinted == False):
                     return False
-                return True
+            return True
+        elif hintType == "color":
+            for i in range(len(self.cards)):
+                if (self.cards[i].color == hint) and (self.cards[i].colorHinted == False):
+                    return False
+            return True
             
         elif hintType == "number":
             for i in range(len(self.cards)):
-                if (cards[i].number == hint) and (cards[i].numberHinted == False):
+                if (self.cards[i].number == hint) and (self.cards[i].numberHinted == False):
                     return False
-                return True
+            return True
+            
     
     '''
     def playCard(self, playPile, cardPosition, deck, penaltyTokens):
@@ -259,6 +265,10 @@ class Card():
     
     def sayInfo(self):
         print ("Color: {}, number: {}.".format(self.color,self.number))
+        
+    def __eq__(self, other):
+       
+        return self.__dict__ == other.__dict__
         
     
 
@@ -354,22 +364,22 @@ class PlayedPile():
     def addCard(self, card):
         if card.color in self.colors:
             pileIndex = self.colors.index(card.color)
-            print("Index of corresponding color: {}".format(pileIndex))
+            #print("Index of corresponding color: {}".format(pileIndex))
             
             if (len(self.piles[pileIndex]) == 0) and (card.number == 1):
                 self.piles[pileIndex].append(card)
                 
-            elif (len(self.piles[pileIndex]) != 0) and (card.number == self.piles[pileIndex][-1] + 1):
+            elif (len(self.piles[pileIndex]) != 0) and (card.number == self.piles[pileIndex][-1].number + 1):
                 self.piles[pileIndex].append(card)
                 
             else:
-                print ("Error. Card not matched to any pile. Could not add the card to a pile")
+                #print ("Error. Card not matched to any pile. Could not add the card to a pile")
                 return False
             
             return True
             
-        else:
-            print ("Error. Card color does not exist. Could not add the card to a pile")
+        #else:
+            #print ("Error. Card color does not exist. Could not add the card to a pile")
     
     
 class HintTokens():

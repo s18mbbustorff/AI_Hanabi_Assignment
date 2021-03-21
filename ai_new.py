@@ -7,19 +7,14 @@ Created on Tue Mar  9 12:27:15 2021
 """
 import copy
 import numpy as np
+from BeliefSpace import BeliefSpace
 
-
-class BeliefSpace:
-  def __init__(self, state):
-      self.states = []
-      
-      return self.states
     
 
 class State():
     def __init__(self, Player1, Player2, deck, playedPile, discardPile, hintTokens, penaltyTokens, turn, parent):
-        self.Player1 = Player1
-        self.Player2 = Player2
+        self.Player = Player1
+        self.AI = Player2
         self.deck = deck
         self.playedPile = playedPile
         self.discardPile = discardPile
@@ -31,10 +26,12 @@ class State():
         self.depth = 0
         self.value = 0
         
+    def switchTurn(self):
+        self.turn = self.turn%2 + 1
         
-    def __eq__(self, other):
-       
-        return self.__dict__ == other.__dict__
+   #def __eq__(self, other):
+        #print(self.__dict__)
+        #return self.__dict__ == other.__dict__
     
     
 class Card():
@@ -49,6 +46,9 @@ class Card():
         self.colorHinted = False
         self.numberHinted = False
         
+    def sayInfo(self):
+        print ("Color: {}, number: {}.".format(self.color,self.number))
+        
     def __eq__(self, other):
        
         return self.__dict__ == other.__dict__
@@ -58,80 +58,81 @@ class Hint_fun:
     def __init__(self,h_type):
         self.h_type = h_type
         self.name = "hint"
-    def __call__(self,initialstate,side = None):
-        newstate = copy.deepcopy(initialstate) #side is an integer, 0 = left, 1 = right
-        newstate.parent = initialstate
-        newstate.depth = initialstate.depth+1
-        if side != None:
-            newstate.hands[initialstate.player - 1][side].known=True
-        newstate.player = 3 - initialstate.player
-    
-        return [newstate]
+    def __call__(self, initialState, hint = None):
+        #hintType: String. Can be "number" or "color"
+        #hint: String ("red","green",...) or Int ("1","2","3","4" or "5")
+        
+        #initializing variables (extracted from state)
+        newState = copy.deepcopy(initialState)
+        newState.parent = initialState
+        newState.depth = initialState.depth+1
+        
+        if newState.turn == 1:
+            activePlayer = newState.Player
+            otherPlayer = newState.AI
+        elif newState.turn == 2:
+            activePlayer = newState.AI
+            otherPlayer = newState.Player
+        hintTokens = newState.hintTokens
+        
+        #print("hint:", hint)
+        if hintTokens == 0:
+            #print ("Error. Number of Hint Tokens is 0. You cannot make a Hint.")
+            return None
+        
+        if otherPlayer.allHintsGiven(hint, self.h_type):
+                #print ("Error. Hint already given or no cards correspond to the hint. You cannot make that hint.")
+                return None
+        if hint != None:    
+            for i in range(len(otherPlayer.cards)):
+                if self.h_type == "color":
+                    if otherPlayer.cards[i].color == hint:
+                        otherPlayer.cards[i].colorHinted = True
+                elif self.h_type == "number":
+                    if otherPlayer.cards[i].number == hint:
+                        otherPlayer.cards[i].numberHinted = True
+                    
+        newState.switchTurn()
+        
+        return newState
 
     
 class Play_fun: 
     def __init__(self):
         self.name = "play"
-    def __call__(self,initialstate,side): #side is an integer, 0 = left, 1 = right
-        newstate = copy.deepcopy(initialstate)
-        newstate.parent = initialstate
-        newstate.depth = initialstate.depth+1
-        #------------------------
-        #if no cards left in deck
-        if initialstate.deck == 0:
-            if initialstate.player == 1:
-                playedcard = initialstate.cards1[side]
-                if playedcard.number == (max(initialstate.table)+1): #check if it is a correct card
-                    newstate.table.append(playedcard.number) #it is added to the table of the new state
-                newstate.cards1[side] = None #remove card from hand
-                newstate.player = 2 #change player turn
-            
-            elif initialstate.player == 2:
-                playedcard = initialstate.cards2[side]
-                if playedcard.number == (max(initialstate.table)+1): #if it is a correct card
-                    newstate.table.append(playedcard.number) #it is added to the table of the new state
-                newstate.cards2[side] = None
-                newstate.player = 1
-            
-            return [newstate]
-        #----------------------------
-        #if there are cards left in the deck, we need to make a new state for each possibility of a new card
-        #the function will return a list of new states
-        else: 
-            #initializing the list of newstates
-            nbCardsLeft = initialstate.deck
-            newstates = [None] * nbCardsLeft
-            for i in range(nbCardsLeft):
-                newstates[i] = copy.deepcopy(newstate)
+    def __call__(self,initialState, cardPosition): #side is an integer, 0 = left, 1 = right
+        #cardPosition: Int. Index of the card you want to play from your hand.
         
-        	#making a list of all the possible numbers left
-            discoveredNumbers = []
-            for card in initialstate.discoveredCards:
-                discoveredNumbers.append(card.number)
-            allNumbers = [1,2,3,4,5]
-            numbersLeft = [x for x in allNumbers if x not in discoveredNumbers]
-            #updating all the new states with all possible new cards
-            #then removing the played card (add its number to table if correct)
-            if initialstate.player == 1:
-                playedcard = initialstate.cards1[side]
-                for i in range(nbCardsLeft):
-                    newstates[i].cards1[side] = Card(numbersLeft[i]) #old card that was played gets replaced by new card
-                    if playedcard.number == (max(initialstate.table)+1): #if it is a correct card
-                        newstates[i].table.append(playedcard.number) #it is added to the table of the new state
-                    
-                    newstates[i].player = 2
-            elif initialstate.player == 2:
-                playedcard = initialstate.cards2[side]
-                for i in range(nbCardsLeft):
-                    newstates[i].cards2[side] = Card(numbersLeft[i]) #old card that was played gets replaced by new card
-                    if playedcard.number == (max(initialstate.table)+1): #if it is a correct card
-                        newstate.table.append(playedcard.number) #its number is added to the table of the new state
-                
-                    newstates[i].player = 1
-                    
-            for state in newstates:
-                state.deck = initialstate.deck-1
-            return newstates[0] # should return only one state
+        #initializing variables (extracted from state)
+        newState = copy.deepcopy(initialState)
+        newState.parent = initialState
+        newState.depth = initialState.depth+1
+        
+        if newState.turn == 1:
+            activePlayer = newState.Player
+        elif newState.turn == 2:
+            activePlayer = newState.AI
+        penaltyTokens = newState.penaltyTokens
+        deck = newState.deck
+        
+        playedCard = activePlayer.cards[cardPosition]
+        
+        #check if the card was correct somehow
+        #use functions from the playPile
+        verif = newState.playedPile.addCard(playedCard)
+        
+        if verif == False:
+            newState.penaltyTokens.addT()
+            newState.discardPile.addCard(playedCard)
+        else:
+            # instead of drawing we remove a card
+            activePlayer.cards.pop(cardPosition)
+            
+        #activePlayer.draw(deck, cardPosition)
+        
+        newState.switchTurn()
+            
+        return newState
 
 
 
@@ -143,86 +144,131 @@ class Solver:
         self.actions = [[Hint_fun("color"), Hint_fun("number")], Play_fun()]
         
     def utility(self, state):
-        return 10 * len(state.table)
+        utility = 0
+        for pile in state.playedPile.piles:
+            #print(len(pile))
+            utility = utility + len(pile)
+            #print(state.penaltyTokens.numberOfTokens)
+        return utility * 10 - state.penaltyTokens.numberOfTokens
    
     
     def evaluate(self, beliefspace):
-        results = []
+        results =0
         for state in beliefspace:
             # TO DO
             # IF AN ACTION IS NOT PERMISIBLE RETURN NONE (action that would lose a life is not permisible)
             # PLAY RETURNS ONLY ONE STATE AND IT DELETES THE PLAYED CARDS FROM THE PLAYERS HANDS
             # CHECK FOR IDENTICAL STATES
             # HINT FUNCTION SHOULD BE ABLE NOT TO GIVE HINT (Player giving a hint to the AI)
-            children = [(self.weighted_value(action(state, pos),action.__dict__),action.__dict__,pos) for action in self.actions[0] for pos in np.arange(len(state.hands[2 - state.player]))] # giving hint
-            children = children + [(self.weighted_value(self.actions[1](state, pos),self.actions[1].__dict__,pos),self.actions[1].__dict__,pos) for pos in np.arange(len(state.hands[state.player]))] # playing card
-            print(children)
-            results.append(sorted(children, key=lambda tup: tup[0])[-1])
+            #print(np.unique([card.color for card in state.Player.cards]))
+            """
+            children = [(self.weighted_value(self.actions[0][0](state,color)) ,self.actions[0][0].__dict__, color) for color in np.unique([card.color for card in state.Player.cards]) ] # giving hint color
+            children = children + [(self.weighted_value(self.actions[0][1](state, number)),self.actions[0][1].__dict__, number) for number in np.unique([card.number for card in state.Player.cards]) ] # giving hint color
+            children = children + [(self.weighted_value(self.actions[1](state, pos)),self.actions[1].__dict__,pos) for pos in np.arange(len(state.AI.cards))] # playing card
+            #print(children)
+            #results.append(sorted(children, key=lambda tup: tup[0]))
+            """
+            children = [self.weighted_value(self.actions[0][0](state,color)) for color in np.unique([card.color for card in state.Player.cards]) ] # giving hint color
+            children = children + [self.weighted_value(self.actions[0][1](state, number)) for number in np.unique([card.number for card in state.Player.cards]) ] # giving hint color
+            children = children + [self.weighted_value(self.actions[1](state, pos)) for pos in np.arange(len(state.AI.cards))] # playing card
+            results = results + np.array(children)
+            actions = [(self.actions[0][0].__dict__, color) for color in np.unique([card.color for card in state.Player.cards])]
+            actions = actions + [(self.actions[0][1].__dict__, number) for number in np.unique([card.number for card in state.Player.cards]) ]
+            actions = actions + [(self.actions[1].__dict__,pos) for pos in np.arange(len(state.AI.cards))]
+            top_action = actions[np.argmax(results)]
         
-        return results
+        return results, actions, top_action
     
     def max_value(self, state):
         global w
-        if state == None:
-            return 0
+        if state is None:
+            return - 10
+        #print(len(state.Player.cards))
+        #print("depth max: ", state.depth)
+        if state.penaltyTokens.numberOfTokens != 0:
+            return -10
         if state.depth >= self.max_depth:
             return self.utility(state)
         v = - np.inf
-        # giving hints
-        for action in self.actions[0]: 
-            for pos in np.arange(len(state.hands[2 - state.player])):
-                v = np.amax(v,self.weighted_value(action(state,pos)))
+        # giving hints colors
+        for card in state.Player.cards:
+            v = max(v,self.weighted_value(self.actions[0][0](state,card.color)))
+        # giving hints numbers
+            v = max(v,self.weighted_value(self.actions[0][1](state,card.number)))
+        
         # playing cards 
-        for pos in np.arange(len(state.hands[state.player])):
-            v = np.amax(v,self.weighted_value(self.actions[1](state, pos)))
+        for pos in np.arange(len(state.AI.cards)):
+            v = max(v,self.weighted_value(self.actions[1](state, pos)))
         return v
         
         
     def weighted_value(self, state):
         global w
-        if state == None:
-            return 0
+        if state is None:
+            return - 10
+        #print("depth weighted: ", state.depth)
+        if state.penaltyTokens.numberOfTokens != 0:
+            return -10
         # Calculate probabilities for what might the player play, if there is a hint on a card, playing this card is more probable than other actions
         # If there are no hints, giving a hint is the most probable
         # However if a player gives us a hint, it has no new information for us -> idle state
         if state.depth >= self.max_depth:
             return self.utility(state)
-        a = np.ones(len(state.hands[state.player]))
-        for i in range(len(state.hands[state.player])):
-            if state.hands[state.player][i].colorHinted or state.hands[state.player][i].numberHinted:
+        """
+        a = np.ones(len(state.Player.cards))
+        for i in range(len(a)):
+            if state.Player.cards[i].colorHinted or state.Player.cards[i].numberHinted:
                 a[i] = 2
-            if state.hands[state.player][i].colorHinted and state.hands[state.player][i].numberHinted:
+            if state.Player.cards[i].colorHinted and state.Player.cards[i].numberHinted:
                 a[i] = 4
-        if a.sum() == len(state.hands[state.player]): # if there are no hints on the cards
-            w_hint = 2/(2 + len(state.hands[state.player]))
-            w_play = 1/(2 + len(state.hands[state.player]))
+        if a.sum() == len(state.Player.cards): # if there are no hints on the cards
+            w_hint = 2/(2 + len(state.Player.cards))
+            w_play = 1/(2 + len(state.Player.cards))
         else: #if there are hints on the cards
             w_hint = 1/(a.sum())
             w_play = 1/(a.sum())
-            
+        """
+        a = np.zeros(len(state.Player.cards))
+        for i in range(len(a)):
+            if state.Player.cards[i].colorHinted or state.Player.cards[i].numberHinted:
+                a[i] = 1
+            if state.Player.cards[i].colorHinted and state.Player.cards[i].numberHinted:
+                a[i] = 2
+        if a.sum() == 0: # if there are no hints on the cards
+            w_hint = 1
+            w_play = 0
+        else: #if there are hints on the cards
+            w_hint = 1/(a.sum())/3
+            w_play = 2/(a.sum())/3
         v = w_hint*self.max_value(self.actions[0][0](state))
-        for pos in np.arange(len(state.hands[state.player])):
+        
+        for pos in np.arange(len(state.Player.cards)):
             v = v + w_play*a[pos]*self.max_value(self.actions[1](state, pos))
         return v
   
   
-if __name__ == "__main__":
+#if __name__ == "__main__":
     
-    c1 = Card(1)
-    c2 =  Card(2)
-    c3 =  Card(3)
-    c4 =  Card(4)
-    c5 =  Card(5)
-    cards1 = [c5, c1]
-    cards2 = [c2, c4]
-    table = [0]
-    deck = 1
-    parent = None
-    player = 2
-    state = State(player,cards1,cards2,table,deck, parent)
-    initial_belief_states = [state]
-    solver = Solver(2)
-    terminal = solver.forward2(initial_belief_states, actions)
+    #c1 = Card(1)
+    #c2 =  Card(2)
+    #c3 =  Card(3)
+    #c4 =  Card(4)
+    #c5 =  Card(5)
+    #cards1 = [c5, c1]
+    #cards2 = [c2, c4]
+    #table = [0]
+    #deck = 1
+    #parent = None
+    #player = 2
+    #state = State(player,cards1,cards2,table,deck, parent)
+    #initial_belief_states = [state]
+    #solver = Solver(2, 4)
+    #states = firstTest()
+    #state = states[0]
+    #terminal = solver.evaluate([state])
+    
+    
+    
     """
     print("Some tests to see the Actions funtioning:")
     print("0.Initial state with cards: player1: (1,2), player2: (3,4)")
@@ -242,7 +288,17 @@ if __name__ == "__main__":
     state4 = Actions.Hint(state3[0],1)
     print(state4[0].depth)
     """
-    
+    """
+    [[(0.0, {'h_type': 'color', 'name': 'hint'}, 'blue'),
+   (-6.666666666666666, {'h_type': 'color', 'name': 'hint'}, 'red'),
+   (6.666666666666666, {'h_type': 'number', 'name': 'hint'}, 1),
+   (-6.666666666666666, {'h_type': 'number', 'name': 'hint'}, 3),
+   (-6.666666666666666, {'h_type': 'number', 'name': 'hint'}, 4),
+   (-10, {'name': 'play'}, 0),
+   (10.0, {'name': 'play'}, 1),
+   (-10, {'name': 'play'}, 2),
+   (-10, {'name': 'play'}, 3)]],
+   """
     
     
     

@@ -30,10 +30,10 @@ def firstTest():
     hintTokens = HintTokens(maxTokens, maxTokens)
     
     maxTokens = 3
-    penaltyTokens = PenaltyTokens(maxTokens, maxTokens)
+    penaltyTokens = PenaltyTokens(0, maxTokens)
     
     #create final variables for state
-    turn = 1
+    turn = 2
     parent = []
     
     states = []
@@ -41,9 +41,8 @@ def firstTest():
     states.append(initialState)
     
     return states
-    
+"""  
 print("Running test 1:")
-"""
 states = firstTest()
 state1 = states[0]
 a = state1.Player2.storeInfo() + state1.deck.storeInfo()
