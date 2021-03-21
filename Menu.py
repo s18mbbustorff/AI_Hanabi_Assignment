@@ -149,6 +149,7 @@ def playRound(states, action, parameter):
 
 
     while True:
+        #----------------------AI: disable human = true, if you want to test with AI
         human = True
         if human:
             print("{}, (Player{}), choose an option: ".format(activePlayer.name, activePlayer.order))
@@ -225,6 +226,7 @@ def playGame(states):
     
     while True:
         try:
+            #-----------------------------AI: action and parameter must be defined when the AI is playing
             action = None 
             parameter = None
             states = playRound(states, action, parameter)
