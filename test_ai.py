@@ -54,6 +54,8 @@ if __name__ == "__main__":
     print("Starting state: PLAYER ", state.Player.storeInfo())
     print("Starting state: AI ", state.AI.storeInfo())
     solver = Solver(2, 4)
+    print(solver.evaluate(space.states))
+    """
     terminal, actions, top_action = solver.evaluate(space.states)
     #print("Terminal info: ", terminal)
     for i, (action,value) in enumerate(zip(actions, terminal)):
@@ -61,6 +63,7 @@ if __name__ == "__main__":
     print("Starting state: PLAYER ", state.Player.storeInfo())
     print("Starting state: AI ", state.AI.storeInfo())
     print("DO: ", top_action)
+    """
     
     
     

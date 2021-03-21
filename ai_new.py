@@ -177,7 +177,11 @@ class Solver:
             actions = actions + [(self.actions[1].__dict__,pos) for pos in np.arange(len(state.AI.cards))]
             top_action = actions[np.argmax(results)]
         
-        return results, actions, top_action
+        #return results, actions, top_action
+        if top_action[0]["name"] == "play":
+            return 1,top_action[1]
+        elif top_action[0]["name"] == "hint":
+            return 2,(top_action[0]["h_type"], top_action[1])
     
     def max_value(self, state):
         global w
