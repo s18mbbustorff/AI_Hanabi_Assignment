@@ -27,8 +27,8 @@ class State():
     def switchTurn(self):
         self.turn = self.turn%2 + 1
         
-        
-class Actions():
+                
+class Action():
     
     def hint(initialState, hintType, hint):
         #hintType: String. Can be "number" or "color"
@@ -48,13 +48,13 @@ class Actions():
         hintTokens = newState.hintTokens
         
         
-        if hintTokens == 0:
+        if hintTokens.numberOfTokens == 0:
             print ("Error. Number of Hint Tokens is 0. You cannot make a Hint.")
             return None
         
         if otherPlayer.allHintsGiven(hint, hintType):
-                print ("Error. Hint already given or no cards correspond to the hint. You cannot make that hint.")
-                return None
+            print ("Error. Hint already given or no cards correspond to the hint. You cannot make that hint.")
+            return None
             
         for i in range(len(otherPlayer.cards)):
             if hintType == "color":
@@ -83,7 +83,7 @@ class Actions():
         hintTokens = newState.hintTokens
         deck = newState.deck
         
-        if (hintTokens.nbTokens == hintTokens.maxTokens):
+        if (hintTokens.numberOfTokens == hintTokens.maxTokens):
             print ("Error. Number of Hint Tokens is maxed. You cannot discard a card.")
             return None
         
@@ -99,7 +99,7 @@ class Actions():
     
     
         
-    def playCard(initialState, cardPosition):
+    def play(initialState, cardPosition):
         #cardPosition: Int. Index of the card you want to play from your hand.
         
         #initializing variables (extracted from state)
@@ -123,6 +123,7 @@ class Actions():
         if verif == False:
             newState.penaltyTokens.addT()
             newState.discardPile.addCard(playedCard)
+            print("OOPS. You got a penalty token!")
             
         activePlayer.draw(deck, cardPosition)
         
@@ -215,7 +216,6 @@ class Player():
                 if (self.cards[i].number == hint) and (self.cards[i].numberHinted == False):
                     return False
             return True
-            
     
     '''
     def playCard(self, playPile, cardPosition, deck, penaltyTokens):
@@ -241,8 +241,15 @@ class Player():
        cardMatrix = [ [ 0 for i in range(M) ] for j in range(N) ] 
        
        for i in range(len(self.cards)):
-           cardMatrix[i][0] = self.cards[i].number
-           cardMatrix[i][1] = str(self.cards[i].color)
+           number = str(self.cards[i].number)
+           color = str(self.cards[i].color)
+           if self.cards[i].numberHinted:
+               number = number+"*"
+           if self.cards[i].colorHinted:
+               color = color+"*"
+               
+           cardMatrix[i][0] = number
+           cardMatrix[i][1] = color
        
        return cardMatrix
      
@@ -269,8 +276,6 @@ class Card():
     def __eq__(self, other):
        
         return self.__dict__ == other.__dict__
-        
-    
 
 class Deck():
     
@@ -364,7 +369,6 @@ class PlayedPile():
     def addCard(self, card):
         if card.color in self.colors:
             pileIndex = self.colors.index(card.color)
-            #print("Index of corresponding color: {}".format(pileIndex))
             
             if (len(self.piles[pileIndex]) == 0) and (card.number == 1):
                 self.piles[pileIndex].append(card)
@@ -373,13 +377,15 @@ class PlayedPile():
                 self.piles[pileIndex].append(card)
                 
             else:
-                #print ("Error. Card not matched to any pile. Could not add the card to a pile")
+                print ("Error. Card not matched to any pile. Could not add the card to a pile")
                 return False
             
+            print("Well done! The card was added to the firework!")
+            self.piles[pileIndex][-1].sayInfo()
             return True
             
-        #else:
-            #print ("Error. Card color does not exist. Could not add the card to a pile")
+        else:
+            print ("Error. Card color does not exist. Could not add the card to a pile")
     
     
 class HintTokens():
