@@ -12,7 +12,9 @@ import copy
 class State():
     def __init__(self, Player1, Player2, deck, playedPile, discardPile, hintTokens, penaltyTokens, turn, parent):
         self.Player1 = Player1
+        self.Player = self.Player1
         self.Player2 = Player2
+        self.AI = self.Player2
         self.deck = deck
         self.playedPile = playedPile
         self.discardPile = discardPile

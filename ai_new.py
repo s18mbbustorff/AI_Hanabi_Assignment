@@ -11,7 +11,7 @@ from BeliefSpace import BeliefSpace
 
     
 
-class State():
+class State_search():
     def __init__(self, Player1, Player2, deck, playedPile, discardPile, hintTokens, penaltyTokens, turn, parent):
         self.Player = Player1
         self.AI = Player2
@@ -134,6 +134,36 @@ class Play_fun:
             
         return newState
 
+class Discard_fun:
+        #cardPosition: Int. Index of the card you want to discard from your hand.
+        def __init__(self):
+             self.name = "discard"
+        def __call__(self,initialState, cardPosition):
+            #initializing variables (extracted from state)
+            newState = copy.deepcopy(initialState)
+            newState.parent = initialState
+            newState.depth = initialState.depth+1
+            
+            if newState.turn == 1:
+                activePlayer = newState.Player
+            elif newState.turn == 2:
+                activePlayer = newState.AI
+            hintTokens = newState.hintTokens
+            deck = newState.deck
+            
+            if (hintTokens.numberOfTokens == hintTokens.maxTokens):
+                #print ("Error. Number of Hint Tokens is maxed. You cannot discard a card.")
+                return None
+            
+            discardedCard = activePlayer.cards[cardPosition]
+            newState.discardPile.addCard(discardedCard)
+            #activePlayer.draw(deck, cardPosition)
+            hintTokens.addT()
+            
+            newState.switchTurn()
+            
+            return newState
+    
 
 
 class Solver:
@@ -141,7 +171,7 @@ class Solver:
         self.max_depth = max_depth
         self.hand_size = hand_size
         
-        self.actions = [[Hint_fun("color"), Hint_fun("number")], Play_fun()]
+        self.actions = [[Hint_fun("color"), Hint_fun("number")], Play_fun(), Discard_fun()]
         
     def utility(self, state):
         utility = 0
@@ -149,11 +179,11 @@ class Solver:
             #print(len(pile))
             utility = utility + len(pile)
             #print(state.penaltyTokens.numberOfTokens)
-        return utility * 10 - state.penaltyTokens.numberOfTokens
+        return utility * 10 - 5*state.penaltyTokens.numberOfTokens - len(state.discardPile.cards)
    
     
-    def evaluate(self, beliefspace):
-        results =0
+    def evaluate(self, beliefspace, test):
+        results = 0
         for state in beliefspace:
             # TO DO
             # IF AN ACTION IS NOT PERMISIBLE RETURN NONE (action that would lose a life is not permisible)
@@ -171,22 +201,27 @@ class Solver:
             children = [self.weighted_value(self.actions[0][0](state,color)) for color in np.unique([card.color for card in state.Player.cards]) ] # giving hint color
             children = children + [self.weighted_value(self.actions[0][1](state, number)) for number in np.unique([card.number for card in state.Player.cards]) ] # giving hint color
             children = children + [self.weighted_value(self.actions[1](state, pos)) for pos in np.arange(len(state.AI.cards))] # playing card
+            children = children + [self.weighted_value(self.actions[2](state, pos)) for pos in np.arange(len(state.AI.cards))] # discarding a card
             results = results + np.array(children)
             actions = [(self.actions[0][0].__dict__, color) for color in np.unique([card.color for card in state.Player.cards])]
             actions = actions + [(self.actions[0][1].__dict__, number) for number in np.unique([card.number for card in state.Player.cards]) ]
             actions = actions + [(self.actions[1].__dict__,pos) for pos in np.arange(len(state.AI.cards))]
+            actions = actions + [(self.actions[2].__dict__,pos) for pos in np.arange(len(state.AI.cards))]
             top_action = actions[np.argmax(results)]
         
-        #return results, actions, top_action
-        if top_action[0]["name"] == "play":
-            return 1,top_action[1]
-        elif top_action[0]["name"] == "hint":
-            return 2,(top_action[0]["h_type"], top_action[1])
+        if test:
+            return results, actions, top_action
+        else:
+            if top_action[0]["name"] == "play":
+                return 1,top_action[1]
+            elif top_action[0]["name"] == "hint":
+                return 2,(top_action[0]["h_type"], top_action[1])
+        
     
     def max_value(self, state):
         global w
         if state is None:
-            return - 10
+            return 0
         #print(len(state.Player.cards))
         #print("depth max: ", state.depth)
         if state.penaltyTokens.numberOfTokens != 0:
@@ -203,12 +238,15 @@ class Solver:
         # playing cards 
         for pos in np.arange(len(state.AI.cards)):
             v = max(v,self.weighted_value(self.actions[1](state, pos)))
+            v = max(v,self.weighted_value(self.actions[2](state, pos)))
+            
         return v
         
         
     def weighted_value(self, state):
         global w
         if state is None:
+            #print("BOOM")
             return - 10
         #print("depth weighted: ", state.depth)
         if state.penaltyTokens.numberOfTokens != 0:

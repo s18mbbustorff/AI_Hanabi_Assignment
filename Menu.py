@@ -6,8 +6,10 @@ Created on Sun Mar 14 16:44:45 2021
 """
 
 from Main import *
+from ai_new import Solver
 from inputNumber import inputNumber
 from displayMenu import displayMenu
+from BeliefSpace import BeliefSpace
 
 class CustomError(Exception):
     pass
@@ -18,7 +20,10 @@ def startGame():
     
     #create Player objects
     name1 = input("Name of first player: ")
+    """
     name2 = input("Name of second player: ")
+    """
+    name2 = "AI"
     order1 = 1
     order2 = 2
     numberOfCards = int(input("How many cards per player? "))
@@ -41,10 +46,10 @@ def startGame():
     discardPile = DiscardPile([])
     
     #create Tokens objects
-    maxTokens = input("Choose max number of Hint Tokens: ")
+    maxTokens = int(input("Choose max number of Hint Tokens: "))
     hintTokens = HintTokens(maxTokens, maxTokens)
     
-    maxTokens = input("Choose max number of Penalty Tokens: ")
+    maxTokens = int(input("Choose max number of Penalty Tokens: "))
     penaltyTokens = PenaltyTokens(0, maxTokens)
     
     #create final variables for state
@@ -134,11 +139,11 @@ def playRound(states, action, parameter):
     if initialState.turn == 1:
         activePlayer = initialState.Player1
         otherPlayer = initialState.Player2
-        human = False
+        human = True
     elif initialState.turn == 2:
         activePlayer = initialState.Player2
         otherPlayer = initialState.Player1
-        human = True
+        human = False
         
     
     actionOptions = ["Play a card", "Give a hint", "Discard a card","Quit"]
@@ -149,21 +154,25 @@ def playRound(states, action, parameter):
 
 
     while True:
+        print(human)
+        print("^^^^^^^^^^^^^^^^")
         #----------------------AI: disable human = true, if you want to test with AI
-        human = True
+        #human = True
         if human:
             print("{}, (Player{}), choose an option: ".format(activePlayer.name, activePlayer.order))
             choiceAction = displayMenu(actionOptions)
         else:
-            choiceAction = action
-    
+            solver = Solver(2, 4)
+            space = BeliefSpace(states[-1],len(initialState.AI.cards))
+            choiceAction,parameter = solver.evaluate(space.states, False)
+            print(choiceAction,parameter)
     
         #PLAY
         if choiceAction == 1:
             if human:
                 cardChoice = int(chooseCardFromHand(activePlayer, "play"))
             else:
-                cardChoice = parameter+1
+                cardChoice = parameter
             if cardChoice == 4:
                 newState = None
             else:
@@ -237,6 +246,8 @@ def playGame(states):
             break
         
     return states
+if __name__ == "__main__":
+    playGame(None)
         
         
         

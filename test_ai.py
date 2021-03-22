@@ -7,7 +7,7 @@ Created on Tue Mar 16 22:27:53 2021
 """
 
 import random
-from ai_new import Solver, State
+from ai_new import Solver, State_search
 from Main import Deck, PlayedPile, HintTokens, PenaltyTokens, DiscardPile, Player
 from BeliefSpace import BeliefSpace
     
@@ -29,7 +29,7 @@ def firstTest():
     
     #create Tokens objects
     maxTokens = 9
-    hintTokens = HintTokens(maxTokens, maxTokens)
+    hintTokens = HintTokens(maxTokens-1, maxTokens)
     
     maxTokens = 3
     penaltyTokens = PenaltyTokens(0, maxTokens)
@@ -39,7 +39,7 @@ def firstTest():
     parent = []
     
     states = []
-    initialState = State(Player1, Player2, newDeck, playedPile, discardPile, hintTokens, penaltyTokens, turn, parent)
+    initialState = State_search(Player1, Player2, newDeck, playedPile, discardPile, hintTokens, penaltyTokens, turn, parent)
     states.append(initialState)
     
     return states
@@ -47,23 +47,25 @@ def firstTest():
 
 if __name__ == "__main__":
     
-    random.seed(113)
+    #random.seed(115)
     states = firstTest()
     state = states[0]
+    #state.AI.cards[0].colorHinted = True
+    #state.AI.cards[2].numberHinted = True
     space = BeliefSpace(state,4)
     print("Starting state: PLAYER ", state.Player.storeInfo())
     print("Starting state: AI ", state.AI.storeInfo())
     solver = Solver(2, 4)
-    print(solver.evaluate(space.states))
-    """
-    terminal, actions, top_action = solver.evaluate(space.states)
+    #print(solver.evaluate(space.states))
+    
+    terminal, actions, top_action = solver.evaluate(space.states, True)
     #print("Terminal info: ", terminal)
     for i, (action,value) in enumerate(zip(actions, terminal)):
         print(str(i) + ". Action: ", action, "    Value: ", str(int(value)))
     print("Starting state: PLAYER ", state.Player.storeInfo())
     print("Starting state: AI ", state.AI.storeInfo())
     print("DO: ", top_action)
-    """
+    
     
     
     
