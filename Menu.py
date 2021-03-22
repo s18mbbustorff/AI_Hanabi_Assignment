@@ -65,18 +65,18 @@ def startGame():
     
     return states
 
-def chooseCardFromHand(player, action):
+def chooseCardFromHand(activePlayer, otherPlayer, action):
     
     if action == "hint":
-        print("{}, what card do you want to {}?".format(player.name, action))
+        print("{}, what card do you want to {}?".format(activePlayer.name, action))
         cardOptions = []
-        for i in range(len(player.cards)):
-            word2 = str(player.cards[i].number)
-            word1 = player.cards[i].color
+        for i in range(len(otherPlayer.cards)):
+            word2 = str(otherPlayer.cards[i].number)
+            word1 = otherPlayer.cards[i].color
             
-            if player.cards[i].colorHinted:
+            if otherPlayer.cards[i].colorHinted:
                 word1 = word1+"*"
-            if player.cards[i].numberHinted:
+            if otherPlayer.cards[i].numberHinted:
                 word2 = word2+"*"
                 
                 
@@ -88,15 +88,15 @@ def chooseCardFromHand(player, action):
         
         
     else:
-        print("{}, what card do you want to {}?".format(player.name, action))
+        print("{}, what card do you want to {}?".format(activePlayer.name, action))
         cardOptions = []
-        for i in range(len(player.cards)):
+        for i in range(len(activePlayer.cards)):
             word1 = "?"
             word2 = "?"
-            if player.cards[i].colorHinted:
-                word1 = player.cards[i].color
-            if player.cards[i].numberHinted:
-                word2 = str(player.cards[i].number)
+            if activePlayer.cards[i].colorHinted:
+                word1 = activePlayer.cards[i].color
+            if activePlayer.cards[i].numberHinted:
+                word2 = str(activePlayer.cards[i].number)
             cardInHand = ("Position of the card in hand: {}, color: {}, number: {}".format(i+1, word1, word2))
             cardOptions.append(cardInHand)
         cardOptions.append("Go Back")
@@ -170,7 +170,7 @@ def playRound(states, action, parameter):
         #PLAY
         if choiceAction == 1:
             if human:
-                cardChoice = int(chooseCardFromHand(activePlayer, "play"))
+                cardChoice = int(chooseCardFromHand(activePlayer,None, "play"))
             else:
                 cardChoice = parameter
             if cardChoice == 4:
@@ -181,7 +181,7 @@ def playRound(states, action, parameter):
         #HINT
         elif choiceAction == 2:
             if human:
-                cardChoice = int(chooseCardFromHand(otherPlayer, "hint"))
+                cardChoice = int(chooseCardFromHand(activePlayer, otherPlayer, "hint"))
                 if cardChoice == 4:
                     newState = None
                 else:
@@ -200,14 +200,14 @@ def playRound(states, action, parameter):
         elif choiceAction == 3:
             
             if human:
-                cardChoice = int(chooseCardFromHand(activePlayer, "discard"))
+                cardChoice = int(chooseCardFromHand(activePlayer, None, "discard"))
             else:
                 cardChoice = parameter+1
             
             if cardChoice == 4:
                 newState = None
             else:
-                newState = Action.play(initialState,cardChoice)
+                newState = Action.discard(initialState,cardChoice)
                 break
             
         #QUIT
@@ -234,6 +234,7 @@ def playGame(states):
         
     
     while True:
+        states[-1].display()
         try:
             #-----------------------------AI: action and parameter must be defined when the AI is playing
             action = None 
