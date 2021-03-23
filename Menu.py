@@ -5,7 +5,7 @@ Created on Sun Mar 14 16:44:45 2021
 @author: mbust
 """
 
-from Main import *
+from Main import State, Player, Deck, PlayedPile, DiscardPile, HintTokens, PenaltyTokens, Action
 from ai_new import Solver
 from inputNumber import inputNumber
 from displayMenu import displayMenu
@@ -154,8 +154,8 @@ def playRound(states, action, parameter):
 
 
     while True:
-        print(human)
-        print("^^^^^^^^^^^^^^^^")
+        #print(human)
+        #print("^^^^^^^^^^^^^^^^")
         #----------------------AI: disable human = true, if you want to test with AI
         #human = True
         if human:

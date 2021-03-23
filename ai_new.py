@@ -207,15 +207,22 @@ class Solver:
             actions = actions + [(self.actions[0][1].__dict__, number) for number in np.unique([card.number for card in state.Player.cards]) ]
             actions = actions + [(self.actions[1].__dict__,pos) for pos in np.arange(len(state.AI.cards))]
             actions = actions + [(self.actions[2].__dict__,pos) for pos in np.arange(len(state.AI.cards))]
-            top_action = actions[np.argmax(results)]
+            
+            
+        sorted_list = sorted([(action,-value) for action, value in zip(actions, results)], key=lambda element: (element[1], element[0][0]["name"],str(element[0][1])))
+        #top_action = actions[np.argmax(results)]
+        top_action = sorted_list[0][0] 
         
         if test:
+            print(sorted_list)
             return results, actions, top_action
         else:
             if top_action[0]["name"] == "play":
                 return 1,top_action[1]
             elif top_action[0]["name"] == "hint":
                 return 2,(top_action[0]["h_type"], top_action[1])
+            elif top_action[0]["name"] == "discard":
+                return 3, top_action[1]
         
     
     def max_value(self, state):
@@ -246,7 +253,7 @@ class Solver:
     def weighted_value(self, state):
         global w
         if state is None:
-            #print("BOOM")
+            print("BOOM")
             return - 10
         #print("depth weighted: ", state.depth)
         if state.penaltyTokens.numberOfTokens != 0:

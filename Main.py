@@ -25,6 +25,7 @@ class State():
         self.parent = parent
         self.depth = 0
         self.value = 0
+        self.test = "KUBA"
         
     def switchTurn(self):
         self.turn = self.turn%2 + 1

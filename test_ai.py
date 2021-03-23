@@ -47,10 +47,11 @@ def firstTest():
 
 if __name__ == "__main__":
     
-    #random.seed(115)
+    random.seed(114)
     states = firstTest()
     state = states[0]
-    #state.AI.cards[0].colorHinted = True
+    state.Player.cards[2].colorHinted = True
+    state.Player.cards[2].numberHinted = True
     #state.AI.cards[2].numberHinted = True
     space = BeliefSpace(state,4)
     print("Starting state: PLAYER ", state.Player.storeInfo())
