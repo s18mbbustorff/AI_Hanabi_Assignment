@@ -20,6 +20,8 @@ class State():
         self.hintTokens = hintTokens
         self.penaltyTokens = penaltyTokens
         self.turn = turn
+        self.score = 0
+        self.maxScore = deck.numberOfColors * 5
         
         if turn == 1:
             self.human = True
@@ -34,16 +36,18 @@ class State():
         self.turn = self.turn%2 + 1
         self.human = not self.human
         
+    def updateScore(self):
+        for s in self.playedPile.piles:
+            self.score = len(s) + self.score  
+        
     def display(self):
         
         #show score, tokens and cards left in deck
-        score = 0
-        for s in self.playedPile.piles:
-            score = len(s) + score            
+        self.updateScore()
         print("")
         print("-----------------------------------------------------------------------------------------")
         print("")
-        print ("Score : {}. Hint tokens left : {}, Penalty tokens used : {}. Cards left in the deck : {}.\n".format(score, self.hintTokens.numberOfTokens, self.penaltyTokens.numberOfTokens, len(self.deck.cards)))
+        print ("Score : {}. Hint tokens left : {}, Penalty tokens used : {}. Cards left in the deck : {}.\n".format(self.score, self.hintTokens.numberOfTokens, self.penaltyTokens.numberOfTokens, len(self.deck.cards)))
 
         red = ';'.join([str(1), str(31), str(28)])
         blue = ';'.join([str(1), str(34), str(28)])
@@ -111,6 +115,41 @@ class State():
         print("")
         print(activePlayer.storeInfo())
         print("")
+        
+    def checkGoal(self):
+        self.updateScore()
+        score = self.score
+        maxScore = self.maxScore
+        cardsLeft = len(self.deck.cards)
+        penalty = self.penaltyTokens.numberOfTokens
+        maxPenalty = self.penaltyTokens.maxTokens
+        
+        red = ';'.join([str(1), str(31), str(28)])
+        green = ';'.join([str(1), str(32), str(28)])
+       
+        
+        if score >= maxScore:
+            outcome = True
+            message = "Congratulations! You've reached the maximum score of {}, game will terminate".format(maxScore)
+            color = green
+        elif cardsLeft == 0:
+            outcome = True
+            message = "Game Over! There are no cards left in the deck. Your final score is {}, game will terminate".format(score)
+            color = red
+        elif penalty == maxPenalty:
+            outcome = True
+            message = "Game Over! You've reached the maximum of {} penalty tokens. Your final score is {}, game will terminate".format(penalty, score)
+            color = red
+        else:
+            outcome = False
+            finalMessage = None
+            
+        if outcome == True:
+            finalMessage = ('\x1b[%sm %s \x1b[0m' % (color, message))
+        
+        return outcome, finalMessage
+        
+        
         
     
                 
@@ -184,7 +223,10 @@ class Action():
         discardedCard = activePlayer.cards[cardPosition]
         discardPile.addCard(discardedCard)
         
-        activePlayer.draw(deck, cardPosition)
+        if len(deck.cards)>0:
+            activePlayer.draw(deck, cardPosition)
+        else:
+            activePlayer.cards.pop(cardPosition)
         hintTokens.addT(human)
         
         newState.switchTurn()
@@ -222,7 +264,10 @@ class Action():
             if human:
                 print("OOPS. You got a penalty token!")
             
-        activePlayer.draw(deck, cardPosition)
+        if len(deck.cards)>0:
+            activePlayer.draw(deck, cardPosition)
+        else:
+            activePlayer.cards.pop(cardPosition)
         
         newState.switchTurn()
             
@@ -365,7 +410,7 @@ class Deck():
     #------------------------------
     
     def removeRandom(self):
-        maxIndex =len(self.cards)-1
+        maxIndex =len(self.cards)
         randomIndex =(randrange(maxIndex))
         randomCard = self.cards[randomIndex]
         self.cards.pop(randomIndex)

@@ -173,7 +173,7 @@ def playRound(states, action, parameter):
                 cardChoice = int(chooseCardFromHand(activePlayer,None, "play"))
             else:
                 cardChoice = parameter
-            if cardChoice == 4:
+            if cardChoice == len(activePlayer.cards):
                 newState = None
             else:
                 newState = Action.play(initialState,cardChoice)
@@ -182,7 +182,7 @@ def playRound(states, action, parameter):
         elif choiceAction == 2:
             if human:
                 cardChoice = int(chooseCardFromHand(activePlayer, otherPlayer, "hint"))
-                if cardChoice == 4:
+                if cardChoice == len(activePlayer.cards):
                     newState = None
                 else:
                     hintType, hint = chooseHintType(activePlayer, otherPlayer, cardChoice)
@@ -204,7 +204,7 @@ def playRound(states, action, parameter):
             else:
                 cardChoice = parameter+1
             
-            if cardChoice == 4:
+            if cardChoice == len(activePlayer.cards):
                 newState = None
             else:
                 newState = Action.discard(initialState,cardChoice)
@@ -215,6 +215,7 @@ def playRound(states, action, parameter):
             
             raise CustomError("Program will terminate")
             break
+        
             
     if newState == None:
         print("Choose another option!")
@@ -231,6 +232,7 @@ def playRound(states, action, parameter):
 def playGame(states):
     if states == None:
         states = startGame()
+    
         
     
     while True:
@@ -249,8 +251,19 @@ def playGame(states):
             print("Round ended.")
             
         except(CustomError):
+            print("User has chosen to Quit.")
             print("Program terminating...")
             break
+        
+        gameEnd, message = states[-1].checkGoal()
+        if gameEnd:
+            print("")
+            print("/\/\/\/\/\/\/\/\/\/\\/\/\/\/\/\/\/\/\/\/\/")
+            print(message)
+            print("/\/\/\/\/\/\/\/\/\/\\/\/\/\/\/\/\/\/\/\/\/")
+            break
+            
+        
         
     return states
 if __name__ == "__main__":
