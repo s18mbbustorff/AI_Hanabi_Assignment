@@ -37,6 +37,7 @@ class State():
         self.human = not self.human
         
     def updateScore(self):
+        self.score = 0
         for s in self.playedPile.piles:
             self.score = len(s) + self.score  
         
