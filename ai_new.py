@@ -99,6 +99,7 @@ class Hint_fun:
                 elif self.h_type == "number":
                     if otherPlayer.cards[i].number == hint:
                         otherPlayer.cards[i].numberHinted = True
+        hintTokens.removeT(human)
                     
         newState.switchTurn()
         
@@ -115,7 +116,7 @@ class Play_fun:
         newState = copy.deepcopy(initialState)
         newState.parent = initialState
         newState.depth = initialState.depth+1
-        human = newState.human
+        human = False
         
         if newState.turn == 1:
             activePlayer = newState.Player

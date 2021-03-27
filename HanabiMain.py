@@ -163,6 +163,12 @@ def playRound(states, action, parameter):
             choiceAction = displayMenu(actionOptions)
         else:
             solver = Solver(2, 4)
+            print("Turn: ", states[-1].turn)
+            print("Human: ", states[-1].human)
+            print("Played Pile Red: ", states[-1].playedPile.convertList(0))
+            print("Played Pile Blue: ", states[-1].playedPile.convertList(1))
+            print("Length of Hand: ", len(initialState.AI.cards))
+            
             space = BeliefSpace(states[-1],len(initialState.AI.cards))
             choiceAction,parameter = solver.evaluate(space.states, False)
             print(choiceAction,parameter)

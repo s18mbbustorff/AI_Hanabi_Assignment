@@ -8,7 +8,7 @@ Created on Tue Mar 16 11:53:02 2021
 
 
 from tests import firstTest
-from Main import Card
+from HanabiClasses import Card
 import copy
 from itertools import combinations
 

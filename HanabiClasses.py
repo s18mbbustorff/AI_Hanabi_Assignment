@@ -373,6 +373,11 @@ class Card():
     
     def sayInfo(self):
         print ("Color: {}, number: {}.".format(self.color,self.number))
+    
+    def storeInfo(self):
+       return ("Color: {}, number: {}.".format(self.color,self.number))
+        
+    
         
     def __eq__(self, other):
        
