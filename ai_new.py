@@ -11,7 +11,7 @@ from BeliefSpace import BeliefSpace
 
     
 
-class State_search():
+class State_search:
     def __init__(self, Player1, Player2, deck, playedPile, discardPile, hintTokens, penaltyTokens, turn, parent):
         self.Player = Player1
         self.AI = Player2
@@ -22,16 +22,21 @@ class State_search():
         self.penaltyTokens = penaltyTokens
         self.turn = turn
         
+        if turn == 1:
+            self.human = True
+        else:
+            self.human = False
         self.parent = parent
         self.depth = 0
         self.value = 0
         
     def switchTurn(self):
         self.turn = self.turn%2 + 1
-        
-   #def __eq__(self, other):
-        #print(self.__dict__)
-        #return self.__dict__ == other.__dict__
+        self.human = not self.human
+    
+    #def __eq__(self, other):
+    #print(self.__dict__)
+    #return self.__dict__ == other.__dict__
     
     
 class Card():
@@ -48,6 +53,8 @@ class Card():
         
     def sayInfo(self):
         print ("Color: {}, number: {}.".format(self.color,self.number))
+    def storeInfo(self):
+        return "Color: {}, number: {}.".format(self.color,self.number)
         
     def __eq__(self, other):
        
@@ -66,6 +73,7 @@ class Hint_fun:
         newState = copy.deepcopy(initialState)
         newState.parent = initialState
         newState.depth = initialState.depth+1
+        human = newState.human
         
         if newState.turn == 1:
             activePlayer = newState.Player
@@ -107,6 +115,7 @@ class Play_fun:
         newState = copy.deepcopy(initialState)
         newState.parent = initialState
         newState.depth = initialState.depth+1
+        human = newState.human
         
         if newState.turn == 1:
             activePlayer = newState.Player
@@ -119,10 +128,10 @@ class Play_fun:
         
         #check if the card was correct somehow
         #use functions from the playPile
-        verif = newState.playedPile.addCard(playedCard)
+        verif = newState.playedPile.addCard(playedCard, human)
         
         if verif == False:
-            newState.penaltyTokens.addT()
+            newState.penaltyTokens.addT(human)
             newState.discardPile.addCard(playedCard)
         else:
             # instead of drawing we remove a card
@@ -143,6 +152,7 @@ class Discard_fun:
             newState = copy.deepcopy(initialState)
             newState.parent = initialState
             newState.depth = initialState.depth+1
+            human = newState.human
             
             if newState.turn == 1:
                 activePlayer = newState.Player
@@ -158,7 +168,7 @@ class Discard_fun:
             discardedCard = activePlayer.cards[cardPosition]
             newState.discardPile.addCard(discardedCard)
             #activePlayer.draw(deck, cardPosition)
-            hintTokens.addT()
+            hintTokens.addT(human)
             
             newState.switchTurn()
             
@@ -212,16 +222,20 @@ class Solver:
         sorted_list = sorted([(action,-value) for action, value in zip(actions, results)], key=lambda element: (element[1], element[0][0]["name"],str(element[0][1])))
         #top_action = actions[np.argmax(results)]
         top_action = sorted_list[0][0] 
+        print(sorted_list)
         
         if test:
-            print(sorted_list)
+            #print(sorted_list)
             return results, actions, top_action
         else:
             if top_action[0]["name"] == "play":
+                print("The computer played: ", state.AI.cards[top_action[1]].storeInfo())
                 return 1,top_action[1]
             elif top_action[0]["name"] == "hint":
+                print("You got a hint: ", str(top_action[0]["h_type"]) + " " +str(top_action[1]))
                 return 2,(top_action[0]["h_type"], top_action[1])
             elif top_action[0]["name"] == "discard":
+                print("The computer discarded: ", state.AI.cards[top_action[1]].storeInfo())
                 return 3, top_action[1]
         
     
@@ -253,7 +267,7 @@ class Solver:
     def weighted_value(self, state):
         global w
         if state is None:
-            print("BOOM")
+            #print("BOOM")
             return - 10
         #print("depth weighted: ", state.depth)
         if state.penaltyTokens.numberOfTokens != 0:
