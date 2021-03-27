@@ -9,6 +9,7 @@ from ai_new import Solver
 from inputNumber import inputNumber
 from displayMenu import displayMenu
 from BeliefSpace import BeliefSpace
+import random
 
 class CustomError(Exception):
     pass
@@ -18,6 +19,7 @@ def startGame():
     #create initial state
     
     #create Player objects
+    random.seed(114)
     name1 = input("Name of first player: ")
     """
     name2 = input("Name of second player: ")
@@ -163,16 +165,17 @@ def playRound(states, action, parameter):
             choiceAction = displayMenu(actionOptions)
         else:
             solver = Solver(2, 4)
+            """
             print("Turn: ", states[-1].turn)
             print("Human: ", states[-1].human)
             print("Played Pile Red: ", states[-1].playedPile.convertList(0))
             print("Played Pile Blue: ", states[-1].playedPile.convertList(1))
             print("Length of Hand: ", len(initialState.AI.cards))
+            """
             
             space = BeliefSpace(states[-1],len(initialState.AI.cards))
             choiceAction,parameter = solver.evaluate(space.states, False)
-            print(choiceAction,parameter)
-    
+            #print(choiceAction,parameter)
         #PLAY
         if choiceAction == 1:
             if human:

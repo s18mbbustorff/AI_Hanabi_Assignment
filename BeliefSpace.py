@@ -16,7 +16,7 @@ from itertools import combinations
 class BeliefSpace:
   def __init__(self, state, hand_size):
       self.states = []
-      
+      state.depth = 0
       deck =  state.deck.storeInfo()
       deck = [(i,j) for [i,j] in deck]
       

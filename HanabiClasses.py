@@ -114,7 +114,7 @@ class State():
             
             print ('\x1b[%sm %s \x1b[0m' % (color, number), end=" ")
         print("")
-        print(activePlayer.storeInfo())
+        #print(activePlayer.storeInfo())
         print("")
         
     def checkGoal(self):

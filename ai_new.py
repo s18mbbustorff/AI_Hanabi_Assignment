@@ -73,7 +73,7 @@ class Hint_fun:
         newState = copy.deepcopy(initialState)
         newState.parent = initialState
         newState.depth = initialState.depth+1
-        human = newState.human
+        human = False #newState.human
         
         if newState.turn == 1:
             activePlayer = newState.Player
@@ -100,8 +100,8 @@ class Hint_fun:
                     if otherPlayer.cards[i].number == hint:
                         otherPlayer.cards[i].numberHinted = True
         hintTokens.removeT(human)
-                    
-        newState.switchTurn()
+        newState.turn = newState.turn%2 + 1            
+        #newState.switchTurn()
         
         return newState
 
@@ -139,8 +139,8 @@ class Play_fun:
             activePlayer.cards.pop(cardPosition)
             
         #activePlayer.draw(deck, cardPosition)
-        
-        newState.switchTurn()
+        newState.turn = newState.turn%2 + 1  
+        #newState.switchTurn()
             
         return newState
 
@@ -153,7 +153,7 @@ class Discard_fun:
             newState = copy.deepcopy(initialState)
             newState.parent = initialState
             newState.depth = initialState.depth+1
-            human = newState.human
+            human = False #newState.human
             
             if newState.turn == 1:
                 activePlayer = newState.Player
@@ -171,7 +171,8 @@ class Discard_fun:
             #activePlayer.draw(deck, cardPosition)
             hintTokens.addT(human)
             
-            newState.switchTurn()
+            newState.turn = newState.turn%2 + 1  
+            #newState.switchTurn()
             
             return newState
     
@@ -223,7 +224,7 @@ class Solver:
         sorted_list = sorted([(action,-value) for action, value in zip(actions, results)], key=lambda element: (element[1], element[0][0]["name"],str(element[0][1])))
         #top_action = actions[np.argmax(results)]
         top_action = sorted_list[0][0] 
-        print(sorted_list)
+        #print(sorted_list)
         
         if test:
             #print(sorted_list)
