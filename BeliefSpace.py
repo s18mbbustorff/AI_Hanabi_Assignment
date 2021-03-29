@@ -19,6 +19,7 @@ class BeliefSpace:
       state.depth = 0
       deck =  state.deck.storeInfo()
       deck = [(i,j) for [i,j] in deck]
+      state.penaltyTokens.numberOfTokens = 0
       
       
       #Reduce the belief space if the AI cards have hints
