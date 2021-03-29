@@ -194,7 +194,7 @@ class Solver:
         return utility * 10 - 5*state.penaltyTokens.numberOfTokens - len(state.discardPile.cards)
    
     
-    def evaluate(self, beliefspace, test):
+    def evaluate(self, beliefspace, current, test):
         results = 0
         for state in beliefspace:
             # TO DO
@@ -231,13 +231,13 @@ class Solver:
             return results, actions, top_action
         else:
             if top_action[0]["name"] == "play":
-                print("The computer played: ", state.AI.cards[top_action[1]].storeInfo())
+                print("The computer played: ", current.AI.cards[top_action[1]].storeInfo())
                 return 1,top_action[1]
             elif top_action[0]["name"] == "hint":
                 print("You got a hint: ", str(top_action[0]["h_type"]) + " " +str(top_action[1]))
                 return 2,(top_action[0]["h_type"], top_action[1])
             elif top_action[0]["name"] == "discard":
-                print("The computer discarded: ", state.AI.cards[top_action[1]].storeInfo())
+                print("The computer discarded: ", current.AI.cards[top_action[1]].storeInfo())
                 return 3, top_action[1]
         
     

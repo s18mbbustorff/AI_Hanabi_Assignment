@@ -16,7 +16,7 @@ class CustomError(Exception):
 
 def startGame():
     
-    random.seed(114)
+    #random.seed(114)
     #Player
     order1 = 1
     order2 = 2
@@ -222,7 +222,7 @@ def playRound(states, action, parameter):
             """
             
             space = BeliefSpace(states[-1],len(initialState.AI.cards))
-            choiceAction,parameter = solver.evaluate(space.states, False)
+            choiceAction,parameter = solver.evaluate(space.states,states[-1], False)
             #print(choiceAction,parameter)
         #PLAY
         if choiceAction == 1:
