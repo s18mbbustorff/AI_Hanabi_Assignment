@@ -247,7 +247,11 @@ class Solver:
             return 0
         #print(len(state.Player.cards))
         #print("depth max: ", state.depth)
-        if state.penaltyTokens.numberOfTokens != 0:
+        initialPenaltyTokens = state.parent.penaltyTokens.numberOfTokens
+        finalPenaltyTokens = state.penaltyTokens.numberOfTokens
+        difPenaltytokens = finalPenaltyTokens - initialPenaltyTokens
+        
+        if difPenaltytokens != 0:
             return -10
         if state.depth >= self.max_depth:
             return self.utility(state)
@@ -272,7 +276,11 @@ class Solver:
             #print("BOOM")
             return - 10
         #print("depth weighted: ", state.depth)
-        if state.penaltyTokens.numberOfTokens != 0:
+        initialPenaltyTokens = state.parent.penaltyTokens.numberOfTokens
+        finalPenaltyTokens = state.penaltyTokens.numberOfTokens
+        difPenaltytokens = finalPenaltyTokens - initialPenaltyTokens
+        
+        if difPenaltytokens != 0:
             return -10
         # Calculate probabilities for what might the player play, if there is a hint on a card, playing this card is more probable than other actions
         # If there are no hints, giving a hint is the most probable

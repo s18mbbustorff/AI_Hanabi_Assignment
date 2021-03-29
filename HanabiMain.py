@@ -16,28 +16,76 @@ class CustomError(Exception):
 
 def startGame():
     
-    #create initial state
-    
-    #create Player objects
     random.seed(114)
-    name1 = input("Name of first player: ")
-    """
-    name2 = input("Name of second player: ")
-    """
-    name2 = "AI"
+    #Player
     order1 = 1
     order2 = 2
-    numberOfCards = int(input("How many cards per player? "))
+    
+    #Deck
+    distributionOptionsList = [[1,2,3,4,5],[1,2,2,3,3,3,4,4,4,4,5,5,5,5,5],[1,1,1,2,2,3,3,4,4,5]]
+    distributionOptionsStr = [str(x) for x in distributionOptionsList]
+    
+    print("How do you want to play the game?")
+    choicePvA = ["Player & AI (test playing with the AI)","Player & Player (in case you would like to test the game engine independently of the AI)"]
+    PvAOption = displayMenu(choicePvA)
+    
+    if PvAOption==1:
+        PvA=True
+    elif PvAOption==2:
+        PvA=False
+    
+    
+    #default set up?
+    print("Do you want to use the default game configuration?")
+    choiceSetUp = ["Default set-up","Manual set-up"]
+    defaultOption = displayMenu(choiceSetUp)
+    
+    if defaultOption==1:
+        default=True
+    elif defaultOption==2:
+        default=False
+
+    if default:
+        name1 = input("Name of first player: ")
+        if PvA:
+            name2 = "AI"
+        else:
+            name2 = input("Name of second player: ")
+        numberOfCards = 4
+        numberOfColors = 2
+        cardsDistribution = distributionOptionsList[2]
+        maxHTokens = 8
+        maxPTokens = 3
+        green = ';'.join([str(1), str(32), str(28)])
+        print("")
+        print('\x1b[%smDefault configurations: \x1b[0m' % (green))
+        print("\x1b[%sm-4 cards in hand\x1b[0m" % (green))
+        print("\x1b[%sm-2 colors in the game\x1b[0m" % (green))
+        print("\x1b[%sm-cards in the deck: three 1s, two 2s, 3s ,4s and one 5 (for each color)\x1b[0m" % (green))
+        print("\x1b[%sm-total number of cards in the deck: 20\x1b[0m" % (green))
+        print("\x1b[%sm-Max number of Hint tokens: 8\x1b[0m" % (green))
+        print("\x1b[%sm-Max number of Penalty tokens: 3\x1b[0m" % (green))
+        #finalMessage = ('\x1b[%sm %s \x1b[0m' % (color, message))
+        
+    else:
+        name1 = input("Name of first player: ")
+        if PvA:
+            name2 = "AI"
+        else:
+            name2 = input("Name of second player: ")
+        numberOfCards = int(input("How many cards per player? "))
+        numberOfColors = int(input("How many colors? "))
+        print("Choose card distribution.")
+        choiceDistribution = displayMenu(distributionOptionsStr)
+        cardsDistribution = distributionOptionsList[int(choiceDistribution)-1]
+        maxHTokens = int(input("Choose max number of Hint Tokens: "))
+        maxPTokens = int(input("Choose max number of Penalty Tokens: "))
+    
+    #create Player objects
     Player1 = Player(name1,order1,numberOfCards)
     Player2 = Player(name2,order2,numberOfCards)
     
     #create Deck object
-    numberOfColors = int(input("How many colors? "))
-    distributionOptionsList = [[1,2,3,4,5],[1,2,2,3,3,3,4,4,4,4,5,5,5,5,5],[1,1,1,2,2,3,3,4,4,5]]
-    distributionOptionsStr = [str(x) for x in distributionOptionsList]
-    print("Choose card distribution.")
-    choiceDistribution = displayMenu(distributionOptionsStr)
-    cardsDistribution = distributionOptionsList[int(choiceDistribution)-1]
     deck = Deck(numberOfColors,cardsDistribution)
             
     #create Played Pile object
@@ -47,11 +95,8 @@ def startGame():
     discardPile = DiscardPile([])
     
     #create Tokens objects
-    maxTokens = int(input("Choose max number of Hint Tokens: "))
-    hintTokens = HintTokens(maxTokens, maxTokens)
-    
-    maxTokens = int(input("Choose max number of Penalty Tokens: "))
-    penaltyTokens = PenaltyTokens(0, maxTokens)
+    hintTokens = HintTokens(maxHTokens, maxHTokens)
+    penaltyTokens = PenaltyTokens(0, maxPTokens)
     
     #create final variables for state
     turn = 1
@@ -61,7 +106,7 @@ def startGame():
     states = []
     Player1.drawNewHand(deck)
     Player2.drawNewHand(deck)
-    initialState = State(Player1, Player2, deck, playedPile, discardPile, hintTokens, penaltyTokens, turn, parent)
+    initialState = State(Player1, Player2, deck, playedPile, discardPile, hintTokens, penaltyTokens, turn, parent,PvA)
     states.append(initialState)
     
     return states
@@ -78,7 +123,7 @@ def chooseCardFromHand(activePlayer, otherPlayer, action):
             if otherPlayer.cards[i].colorHinted:
                 word1 = word1+"*"
             if otherPlayer.cards[i].numberHinted:
-                word2 = word2+"*"
+                word2 = word2+"#"
                 
                 
             cardInHand = ("Position of the card in hand: {}, color: {}, number: {}".format(i+1, word1, word2))
@@ -146,7 +191,10 @@ def playRound(states, action, parameter):
     elif initialState.turn == 2:
         activePlayer = initialState.Player2
         otherPlayer = initialState.Player1
-        human = False
+        if initialState.PvA:
+            human = False
+        else:
+            human = True
         
     
     actionOptions = ["Play a card", "Give a hint", "Discard a card","Quit"]
@@ -211,7 +259,7 @@ def playRound(states, action, parameter):
             if human:
                 cardChoice = int(chooseCardFromHand(activePlayer, None, "discard"))
             else:
-                cardChoice = parameter+1
+                cardChoice = parameter
             
             if cardChoice == len(activePlayer.cards):
                 newState = None

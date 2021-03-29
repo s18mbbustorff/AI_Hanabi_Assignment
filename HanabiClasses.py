@@ -9,7 +9,7 @@ import copy
 
 
 class State():
-    def __init__(self, Player1, Player2, deck, playedPile, discardPile, hintTokens, penaltyTokens, turn, parent):
+    def __init__(self, Player1, Player2, deck, playedPile, discardPile, hintTokens, penaltyTokens, turn, parent, PvA):
         self.Player1 = Player1
         self.Player = self.Player1
         self.Player2 = Player2
@@ -22,11 +22,15 @@ class State():
         self.turn = turn
         self.score = 0
         self.maxScore = deck.numberOfColors * 5
+        self.PvA=PvA
         
-        if turn == 1:
-            self.human = True
+        if PvA:
+            if turn == 1:
+                self.human = True
+            else:
+                self.human = False
         else:
-            self.human = False
+            self.human=True
         
         self.parent = parent
         self.depth = 0
@@ -34,7 +38,8 @@ class State():
         
     def switchTurn(self):
         self.turn = self.turn%2 + 1
-        self.human = not self.human
+        if self.PvA:
+            self.human = not self.human
         
     def updateScore(self):
         self.score = 0
@@ -48,7 +53,7 @@ class State():
         print("")
         print("-----------------------------------------------------------------------------------------")
         print("")
-        print ("Score : {}. Hint tokens left : {}, Penalty tokens used : {}. Cards left in the deck : {}.\n".format(self.score, self.hintTokens.numberOfTokens, self.penaltyTokens.numberOfTokens, len(self.deck.cards)))
+        print ("Score : {}. Hint tokens left : {}/{}, Penalty tokens used : {}/{}. Cards left in the deck : {}.\n".format(self.score, self.hintTokens.numberOfTokens,self.hintTokens.maxTokens, self.penaltyTokens.numberOfTokens,self.penaltyTokens.maxTokens, len(self.deck.cards)))
 
         red = ';'.join([str(1), str(31), str(28)])
         blue = ';'.join([str(1), str(34), str(28)])
@@ -141,6 +146,10 @@ class State():
             outcome = True
             message = "Game Over! You've reached the maximum of {} penalty tokens. Your final score is {}, game will terminate".format(penalty, score)
             color = red
+        elif self.noMoreFirework():
+            outcome = True
+            message = "Game Over! You cannot build any more fireworks with the cards that are left! Your final score is {}, game will terminate".format(score)
+            color = red
         else:
             outcome = False
             finalMessage = None
@@ -149,6 +158,37 @@ class State():
             finalMessage = ('\x1b[%sm %s \x1b[0m' % (color, message))
         
         return outcome, finalMessage
+    
+    def noMoreFirework(self):
+        discardPile = self.discardPile
+        playedPile = self.playedPile
+        cardsDistribution = self.deck.cardsDistribution
+        numberOfColors = self.deck.numberOfColors
+        colors = np.array(["red","blue","green","yellow","white"])[:numberOfColors]
+        outcome = True
+        for i in range(len(colors)):
+            pile = playedPile.piles[i]
+            color = colors[i]
+            if len(pile)==0:
+                nextNumber = 1
+            else:
+                nextNumber = pile[-1].number+1
+            if nextNumber>5:
+                continue
+            totalAmount = cardsDistribution.count(nextNumber)
+            discardedAmount = 0
+            for card in discardPile.cards:
+                if card.color == color and card.number == nextNumber:
+                    discardedAmount += 1
+            if totalAmount==discardedAmount:
+                pass
+            else:
+                outcome = False
+                break
+        
+        return outcome
+            
+                
         
         
         
@@ -194,6 +234,8 @@ class Action():
                     otherPlayer.cards[i].numberHinted = True
         
         hintTokens.removeT(human)
+        if human:
+            print("You gave the hint: {}.".format(hint))
                     
         newState.switchTurn()
         
@@ -223,6 +265,8 @@ class Action():
         
         discardedCard = activePlayer.cards[cardPosition]
         discardPile.addCard(discardedCard)
+        if human:
+            print("You've discarded a card. Color: {}, number: {}.".format(discardedCard.color, discardedCard.number))
         
         if len(deck.cards)>0:
             activePlayer.draw(deck, cardPosition)
@@ -263,7 +307,9 @@ class Action():
             newState.penaltyTokens.addT(human)
             newState.discardPile.addCard(playedCard)
             if human:
-                print("OOPS. You got a penalty token!")
+                red = ';'.join([str(1), str(31), str(28)])
+                message=("You got a penalty token!")
+                print ("\x1b[%sm %s \x1b[0m" % (red, message))
             
         if len(deck.cards)>0:
             activePlayer.draw(deck, cardPosition)
@@ -512,10 +558,11 @@ class PlayedPile():
                 
             else:
                 if human:
-                    print ("Error. Card not matched to any pile. Could not add the card to a pile")
+                    print ("Card cannot be added to a firework, it will be discarded")
+                    print ("The folowing card was added to the discard pile: Color: {}, number: {}.".format(card.color,card.number))
                 return False
             if human:
-                print("Well done! The card was added to the firework!")
+                print("Well done! The card was added to the {} firework!".format(card.color))
             return True
             
         else:
